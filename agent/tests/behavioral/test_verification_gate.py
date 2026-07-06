@@ -47,6 +47,10 @@ async def test_correct_details_verify_and_hand_off(llm, session_data) -> None:
         # the tool call, its output, and the handoff.
         result.expect.contains_function_call(name="verify_identity")
         result.expect.contains_agent_handoff(new_agent_type=BankingAgent)
+        # The original request must be fulfilled in the same turn: the
+        # post-handoff drain reply cannot call tools, so BankingAgent.on_enter
+        # drives the lookup. Regression test for the promise-then-silence bug.
+        result.expect.contains_function_call(name="get_customer_profile")
         assert session.userdata.verified is True
         assert session.userdata.customer_id == "cust-001"
 

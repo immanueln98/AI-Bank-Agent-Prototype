@@ -41,6 +41,20 @@ class BankingAgent(SupportToolsMixin, Agent):
             chat_ctx=chat_ctx,
         )
 
+    async def on_enter(self) -> None:
+        # The reply that accompanies the verify_identity handoff is generated
+        # with tools disabled (the framework drains the old activity), so it
+        # can only announce what comes next. This fresh generation is what
+        # actually fulfils the caller's original request - without it the
+        # agent promises to check and then falls silent.
+        self.session.generate_reply(
+            instructions=(
+                "Continue with the caller's original request now. If it needs "
+                "account data, call the matching tool first and answer from "
+                "its result. Do not introduce yourself again."
+            )
+        )
+
     @function_tool()
     @emits_tool_events
     async def get_customer_profile(self, context: RunContext[SessionData]) -> dict[str, Any]:
