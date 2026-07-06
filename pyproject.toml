@@ -74,7 +74,7 @@ asyncio_mode = "auto"
 markers = [
     "behavioral: agent-behavior tests that call a live LLM (need LIVEKIT_* credentials)",
 ]
-addopts = "-m 'not behavioral'"
+addopts = "-m 'not behavioral' --import-mode=importlib"
 
 [tool.coverage.run]
 source = ["bankagent_shared", "bankagent_backend", "bankagent_agent"]
