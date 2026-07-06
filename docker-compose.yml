@@ -1,0 +1,50 @@
+# Prod-ish local stack. For day-to-day dev prefer `make dev` (hot reload).
+#
+#   docker compose up --build                 # backend + agent
+#   docker compose --profile frontend up      # + static frontend on :8080
+#
+# Reads LiveKit/provider credentials from .env (see .env.example).
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      LOG_FORMAT: json
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  agent:
+    build:
+      context: .
+      dockerfile: agent/Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      BACKEND_BASE_URL: http://backend:8000
+      LOG_FORMAT: json
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  frontend:
+    profiles: [frontend]
+    build:
+      context: frontend
+      args:
+        # The browser calls the backend directly, so this stays localhost.
+        VITE_BACKEND_URL: http://localhost:8000
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
