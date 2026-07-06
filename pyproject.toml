@@ -1,0 +1,83 @@
+[project]
+name = "bankagent-workspace"
+version = "0.1.0"
+description = "AI voice banking assistant POC (LiveKit Agents) - workspace root"
+requires-python = ">=3.12,<3.14"
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["shared", "backend", "agent"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.25",
+    "pytest-cov>=6.0",
+    "pytest-rerunfailures>=14.0",
+    "respx>=0.22",
+    "honcho>=2.0",
+    "pre-commit>=4.0",
+]
+
+# ---------------------------------------------------------------------------
+# Lint / format
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["shared/src", "backend/src", "agent/src"]
+extend-exclude = ["frontend"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # bugbear
+    "SIM", # simplify
+    "RUF", # ruff-specific
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Fixture data is intentionally long and literal-heavy.
+"backend/src/bankagent_backend/fixtures.py" = ["E501"]
+
+# ---------------------------------------------------------------------------
+# Type checking
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+mypy_path = ["shared/src", "backend/src", "agent/src"]
+packages = ["bankagent_shared", "bankagent_backend", "bankagent_agent"]
+disallow_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["livekit.*", "respx", "honcho.*"]
+ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["shared/tests", "backend/tests", "agent/tests"]
+asyncio_mode = "auto"
+markers = [
+    "behavioral: agent-behavior tests that call a live LLM (need LIVEKIT_* credentials)",
+]
+addopts = "-m 'not behavioral'"
+
+[tool.coverage.run]
+source = ["bankagent_shared", "bankagent_backend", "bankagent_agent"]
+
+[tool.coverage.report]
+skip_empty = true
