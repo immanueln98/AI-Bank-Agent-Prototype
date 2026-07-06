@@ -1,4 +1,4 @@
-import type { ScenarioInfo, TokenResponse } from './types';
+import type { CallMetrics, CallRecord, ScenarioInfo, TokenResponse } from './types';
 
 const BACKEND_URL: string =
   (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? 'http://localhost:8000';
@@ -13,6 +13,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function fetchScenarios(): Promise<ScenarioInfo[]> {
   return request<ScenarioInfo[]>('/api/v1/demo/scenarios');
+}
+
+export function fetchCalls(): Promise<CallRecord[]> {
+  return request<CallRecord[]>('/api/v1/calls');
+}
+
+export function fetchCallMetrics(): Promise<CallMetrics> {
+  return request<CallMetrics>('/api/v1/calls/metrics');
 }
 
 export function fetchToken(scenario: string): Promise<TokenResponse> {

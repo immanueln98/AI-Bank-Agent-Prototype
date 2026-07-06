@@ -110,6 +110,17 @@ function ActivityCardView({ card }: { card: ActivityCard }) {
       </div>
     );
   }
+  if (card.kind === 'lockout') {
+    return (
+      <div className="activity-card activity-card--failed">
+        <span className="activity-card__icon">🔒</span>
+        <div>
+          <span className="activity-card__title">Security lockout</span>
+          <span className="activity-card__summary">{card.summary}</span>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={`activity-card activity-card--${card.status}`}>
       <span className="activity-card__icon">

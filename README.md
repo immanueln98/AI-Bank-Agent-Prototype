@@ -5,7 +5,13 @@ A customer speaks to the agent in the browser (production: over the phone via SI
 verifies their identity, answers balance/transaction questions, blocks lost cards, files
 disputes, and hands off to a human with a full summary when it should. A two-panel demo
 console shows the call **and** a live feed of every system call the agent makes — proof the
-answers are grounded, not hallucinated.
+answers are grounded, not hallucinated. A **Supervisor view** shows the contact-centre
+manager's side: containment rate, average handle time, escalations, and a per-call
+PII-masked audit trail.
+
+> Pitching this to a bank? [`docs/PITCH.md`](docs/PITCH.md) is the evidence pack: verified
+> deployments at other banks, the security-guarantee talking points, and the SA regulatory
+> position, with sources.
 
 > **POC status:** the "core banking system" is a mock FastAPI service with fixture data.
 > No real customer data, no real money movement, free-tier infrastructure only.
@@ -33,7 +39,7 @@ flowchart LR
     end
 
     subgraph Bank["Mock core banking (FastAPI)"]
-        API["/verify · /customers · /transactions<br/>/card/report-lost · /disputes<br/>/faq · /escalations"]
+        API["/verify · /customers · /transactions<br/>/card/report-lost · /disputes<br/>/faq · /escalations · /calls"]
         FIX["fixtures.py<br/>5 demo customers"]
     end
 
@@ -56,10 +62,10 @@ card-management, and CRM systems and the agent code does not change.
 
 ```
 shared/    Pydantic API models, PII redaction, structlog setup (used by both services)
-backend/   Mock core-banking API (FastAPI) + LiveKit token endpoint + demo scenarios
+backend/   Mock core-banking API (FastAPI) + LiveKit token endpoint + call records/KPIs
 agent/     Voice agent worker (livekit-agents): agents, tools, events, transcripts
-frontend/  Two-panel demo console (Vite + React + TS)
-docs/      (reserved)
+frontend/  Demo console (Vite + React + TS): call console + supervisor dashboard
+docs/      Pitch evidence pack (PITCH.md)
 ```
 
 ## Quickstart
@@ -120,7 +126,15 @@ to *Verified*, and only then do account tools exist at all.
 
 Bonus beats for any scenario: ask a general question before verifying ("what are your branch
 hours?") — the FAQ tool answers without account access. Try asking for a balance *before*
-verifying — the agent refuses; the activity panel stays empty of account calls.
+verifying — the agent refuses; the activity panel stays empty of account calls. Fail
+verification three times — a red **Security lockout** event fires and only the human-handoff
+path remains.
+
+**After hanging up, switch to the Supervisor view** (toggle in the header): the call you just
+made appears in the call log with its outcome (contained / escalated / verification failed),
+duration, and a drill-down into the full masked audit trail — plus running KPIs (containment
+rate, average handle time, escalations, lockouts). This is the ops story: the AI channel is
+managed with the same numbers as the human one.
 
 ## How the guardrails work (not just prompts)
 
@@ -142,6 +156,10 @@ verifying — the agent refuses; the activity panel stays empty of account calls
   *say* (apologise, offer a human) instead of crashing or going silent.
 - **Every session leaves a masked transcript** (`transcripts/<date>/<session>.jsonl`):
   turns, tool events, and an end-of-call summary — QA/replay ready.
+- **Every call posts a structured record** to the backend at session end: outcome
+  (contained/escalated/verification-failed/abandoned), verification attempts, security
+  lockouts, tools used, and the masked event log — powering the Supervisor dashboard's
+  KPIs and per-call audit drill-down.
 
 ## Testing
 

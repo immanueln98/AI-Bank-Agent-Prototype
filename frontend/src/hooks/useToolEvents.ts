@@ -32,7 +32,7 @@ export type ActivityStatus = 'running' | 'done' | 'failed';
 
 export interface ActivityCard {
   key: string;
-  kind: 'tool' | 'identity' | 'escalation';
+  kind: 'tool' | 'identity' | 'escalation' | 'lockout';
   tool: string | null;
   status: ActivityStatus;
   args: Record<string, unknown> | null;
@@ -78,9 +78,15 @@ export function toActivityCards(events: ToolEvent[]): ActivityCard[] {
       }
       case 'identity_verified':
       case 'escalation':
+      case 'security_lockout':
         cards.push({
           key: event.id,
-          kind: event.type === 'identity_verified' ? 'identity' : 'escalation',
+          kind:
+            event.type === 'identity_verified'
+              ? 'identity'
+              : event.type === 'escalation'
+                ? 'escalation'
+                : 'lockout',
           tool: null,
           status: 'done',
           args: null,

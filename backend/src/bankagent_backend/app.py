@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from bankagent_shared import configure_logging
 
 from .config import BackendSettings
-from .routers import cards, customers, demo, disputes, escalations, faq, livekit_token
+from .routers import calls, cards, customers, demo, disputes, escalations, faq, livekit_token
 
 
 def create_app() -> FastAPI:
@@ -41,6 +41,7 @@ def create_app() -> FastAPI:
     app.include_router(disputes.router, prefix=prefix, tags=["disputes"])
     app.include_router(faq.router, prefix=prefix, tags=["faq"])
     app.include_router(escalations.router, prefix=prefix, tags=["escalations"])
+    app.include_router(calls.router, prefix=prefix, tags=["calls"])
     app.include_router(demo.router, prefix=prefix, tags=["demo"])
     app.include_router(livekit_token.router, prefix=prefix, tags=["livekit"])
     return app

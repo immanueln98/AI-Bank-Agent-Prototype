@@ -65,6 +65,19 @@ class IdentityAgent(SupportToolsMixin, Agent):
         if result is None or not result.verified:
             userdata.failed_verification_attempts += 1
             if userdata.failed_verification_attempts >= MAX_VERIFICATION_ATTEMPTS:
+                # First-class security signal: shows red in the activity panel
+                # and lands in the call record for the supervisor dashboard.
+                if not userdata.locked_out:
+                    userdata.locked_out = True
+                    await userdata.emitter.emit(
+                        ToolEvent(
+                            type="security_lockout",
+                            result_summary=(
+                                f"{MAX_VERIFICATION_ATTEMPTS} failed verification attempts - "
+                                "account access locked for this call; human handoff only."
+                            ),
+                        )
+                    )
                 return (
                     "Verification failed three times. Do NOT attempt again. Offer to "
                     "connect the caller to a human consultant."
