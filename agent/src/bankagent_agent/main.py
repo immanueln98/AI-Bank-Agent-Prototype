@@ -59,8 +59,10 @@ async def entrypoint(ctx: JobContext) -> None:
         stt=build_stt(settings),
         llm=build_llm(settings),
         tts=build_tts(settings),
-        # VAD defaults to the bundled silero model; turn detection uses the
-        # built-in end-of-turn model (weights via `make setup` download-files).
+        # VAD defaults to the bundled silero model (weights via `make setup`
+        # download-files). Turn detection is LiveKit's hosted audio model
+        # (auto-selects v1 on LiveKit Cloud, local v1-mini elsewhere); its
+        # presence tightens endpointing to 0.3s min / 2.5s max automatically.
         turn_detection=inference.TurnDetector(),
         preemptive_generation=True,
     )

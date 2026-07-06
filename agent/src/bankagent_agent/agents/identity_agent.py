@@ -18,7 +18,7 @@ from ..bank_client import BankAPIError
 from ..instrumentation import emits_tool_events
 from ..session_state import SessionData
 from .banking_agent import BankingAgent
-from .prompts import IDENTITY_INSTRUCTIONS
+from .prompts import IDENTITY_INSTRUCTIONS, OPENING_GREETING
 from .support_tools import SupportToolsMixin
 
 MAX_VERIFICATION_ATTEMPTS = 3
@@ -29,15 +29,10 @@ class IdentityAgent(SupportToolsMixin, Agent):
         super().__init__(instructions=IDENTITY_INSTRUCTIONS)
 
     async def on_enter(self) -> None:
-        # The disclosure greeting is mandated here, not left to chance: every
-        # call opens with the AI introduction + recording notice.
-        self.session.generate_reply(
-            instructions=(
-                "Open the call now: introduce yourself as Kea, Meridian Bank's AI "
-                "assistant, mention the call may be recorded for quality purposes, "
-                "and ask how you can help. Two short sentences."
-            )
-        )
+        # Fixed text via say(), not generate_reply(): the caller hears the
+        # mandated disclosure immediately (no LLM round-trip at call start)
+        # and its wording is deterministic rather than LLM-best-effort.
+        self.session.say(OPENING_GREETING)
 
     @function_tool()
     @emits_tool_events
