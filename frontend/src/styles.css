@@ -92,6 +92,29 @@ body {
   border-top: 1px solid var(--line);
 }
 
+.view-switch {
+  display: flex;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px;
+  border-radius: 10px;
+}
+.view-switch__btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.view-switch__btn--active {
+  background: #fff;
+  color: var(--navy);
+}
+
 .app__main {
   flex: 1;
   padding: 24px 28px;
@@ -492,6 +515,199 @@ body {
   border: 2px solid var(--line);
   border-top-color: var(--navy);
   animation: spin 0.8s linear infinite;
+}
+
+/* ---------- supervisor view ---------- */
+.supervisor {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+}
+.kpi-tile {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-top: 3px solid var(--navy);
+}
+.kpi-tile--teal {
+  border-top-color: var(--teal);
+}
+.kpi-tile--amber {
+  border-top-color: var(--amber);
+}
+.kpi-tile--red {
+  border-top-color: var(--red);
+}
+.kpi-tile__label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.kpi-tile__value {
+  font-size: 28px;
+  font-weight: 750;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.kpi-tile__detail {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.supervisor__empty {
+  padding: 18px;
+  margin: 0;
+}
+
+.call-log {
+  display: flex;
+  flex-direction: column;
+}
+.call-row {
+  border-top: 1px solid var(--line);
+}
+.call-row:first-child {
+  border-top: none;
+}
+.call-row summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  cursor: pointer;
+  font-size: 13.5px;
+  flex-wrap: wrap;
+}
+.call-row summary:hover {
+  background: #fbfcfe;
+}
+.call-row__time {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+}
+.call-row__who {
+  font-weight: 650;
+  min-width: 140px;
+}
+.call-row__scenario {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+.call-row__meta {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  margin-left: auto;
+}
+
+.outcome-badge {
+  font-size: 12px;
+  font-weight: 650;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+}
+.outcome-badge--contained {
+  background: var(--teal-soft);
+  color: var(--teal);
+  border-color: var(--teal);
+}
+.outcome-badge--escalated {
+  background: var(--amber-soft);
+  color: var(--amber);
+  border-color: var(--amber);
+}
+.outcome-badge--verification_failed {
+  background: var(--red-soft);
+  color: var(--red);
+  border-color: var(--red);
+}
+
+.call-row__audit {
+  padding: 4px 18px 16px;
+  background: #fbfcfe;
+  border-top: 1px dashed var(--line);
+}
+.call-row__audit h3 {
+  margin: 10px 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--ink-soft);
+}
+.call-row__audit ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.audit-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.audit-line--tool_call_failed,
+.audit-line--security_lockout {
+  border-color: var(--red);
+  background: var(--red-soft);
+}
+.audit-line--identity_verified {
+  border-color: var(--teal);
+  background: var(--teal-soft);
+}
+.audit-line--escalation {
+  border-color: var(--amber);
+  background: var(--amber-soft);
+}
+.audit-line__time {
+  color: var(--ink-soft);
+  font-size: 11.5px;
+}
+.audit-line__type {
+  font-weight: 650;
+  text-transform: capitalize;
+}
+.audit-line__tool {
+  color: var(--navy);
+}
+.audit-line__args {
+  color: var(--ink-soft);
+  background: var(--bg);
+  padding: 1px 6px;
+  border-radius: 5px;
+  overflow-wrap: anywhere;
+}
+.audit-line__summary {
+  color: var(--ink-soft);
+  flex-basis: 100%;
+}
+.call-row__usage {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
 }
 
 @keyframes spin {

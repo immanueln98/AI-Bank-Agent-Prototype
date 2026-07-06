@@ -20,10 +20,11 @@ from livekit.agents import (
     metrics,
 )
 
-from bankagent_shared import KnownPII, configure_logging, get_logger
+from bankagent_shared import KnownPII, ToolEvent, configure_logging, get_logger
 
 from .agents.identity_agent import IdentityAgent
-from .bank_client import BankClient
+from .bank_client import BankAPIError, BankClient
+from .call_record import build_call_record
 from .config import AgentSettings, build_llm, build_stt, build_tts
 from .events import ToolEventEmitter
 from .session_state import SessionData
@@ -53,6 +54,10 @@ async def entrypoint(ctx: JobContext) -> None:
 
     recorder = TranscriptRecorder(settings.transcripts_dir, userdata.session_id, known_pii)
     emitter.add_listener(recorder.record_tool_event)
+
+    # Masked audit log for the end-of-call record (supervisor dashboard).
+    event_log: list[ToolEvent] = []
+    emitter.add_listener(event_log.append)
 
     session: AgentSession[SessionData] = AgentSession(
         userdata=userdata,
@@ -85,6 +90,12 @@ async def entrypoint(ctx: JobContext) -> None:
                 "usage": str(usage.get_summary()),
             }
         )
+        record = build_call_record(userdata, event_log, usage_summary=str(usage.get_summary()))
+        try:
+            await bank.post_call_record(record)
+            log.info("call_record_posted", outcome=record.outcome, tools=record.tools_used)
+        except BankAPIError as exc:
+            log.warning("call_record_post_failed", error=str(exc))
         await bank.aclose()
 
     ctx.add_shutdown_callback(_shutdown)

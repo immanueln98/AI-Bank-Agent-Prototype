@@ -21,6 +21,7 @@ from tenacity import (
 
 from bankagent_shared import get_logger
 from bankagent_shared.models import (
+    CallRecord,
     CardActionResult,
     CustomerProfile,
     DisputeResult,
@@ -137,6 +138,9 @@ class BankClient:
     async def search_faq(self, query: str) -> list[FaqResult]:
         response = await self._call("GET", "/api/v1/faq/search", params={"q": query})
         return [FaqResult.model_validate(f) for f in response.json()]
+
+    async def post_call_record(self, record: CallRecord) -> None:
+        await self._call("POST", "/api/v1/calls", json=record.model_dump(mode="json"))
 
     async def create_escalation(
         self, reason: str, summary: str, customer_id: str | None = None

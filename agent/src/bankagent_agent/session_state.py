@@ -9,6 +9,7 @@ tools at all - see agents/identity_agent.py).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from bankagent_shared import KnownPII
@@ -24,12 +25,14 @@ class SessionData:
     known_pii: KnownPII
     session_id: str = field(default_factory=lambda: uuid4().hex[:12])
     room_name: str = ""
+    started_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     verified: bool = False
     customer_id: str | None = None
     customer_first_name: str | None = None
     account_masked: str | None = None  # e.g. "****5678"
     failed_verification_attempts: int = 0
+    locked_out: bool = False  # 3 failed verifications this call
 
     escalated: bool = False
     escalation_ref: str | None = None
