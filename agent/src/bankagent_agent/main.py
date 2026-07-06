@@ -9,6 +9,7 @@ Run modes (LiveKit CLI):
 from __future__ import annotations
 
 import structlog
+from dotenv import load_dotenv
 from livekit.agents import (
     AgentServer,
     AgentSession,
@@ -29,6 +30,11 @@ from .session_state import SessionData
 from .transcripts import TranscriptRecorder
 
 log = get_logger(__name__)
+
+# The worker's own LiveKit connection (LIVEKIT_URL/API key) is resolved from
+# the process environment by the framework, so .env must actually be exported
+# here - unlike AgentSettings, which reads the file itself.
+load_dotenv()
 
 server = AgentServer()
 

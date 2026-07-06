@@ -214,6 +214,7 @@ dependencies = [
     { name = "httpx" },
     { name = "livekit-agents", extra = ["anthropic"] },
     { name = "pydantic-settings" },
+    { name = "python-dotenv" },
     { name = "tenacity" },
 ]
 
@@ -223,6 +224,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "livekit-agents", extras = ["anthropic"], specifier = "~=1.6" },
     { name = "pydantic-settings", specifier = ">=2.6" },
+    { name = "python-dotenv", specifier = ">=1.0" },
     { name = "tenacity", specifier = ">=9.0" },
 ]
 

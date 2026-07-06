@@ -39,7 +39,7 @@ from bankagent_shared.models import (
 def _has_credentials() -> bool:
     settings = AgentSettings()
     if settings.llm_provider == "anthropic":
-        return bool(os.environ.get("ANTHROPIC_API_KEY"))
+        return settings.anthropic_api_key is not None or bool(os.environ.get("ANTHROPIC_API_KEY"))
     return bool(settings.livekit_api_key and settings.livekit_api_secret)
 
 

@@ -1,9 +1,13 @@
+# Optional: .env vars visible to make itself (fresh clones/CI have no .env).
+# The services read .env themselves, so this is convenience, not a requirement.
+-include .env
 .PHONY: setup dev run-agent run-backend run-frontend lint format typecheck \
         test test-cov test-behavioral docker-up clean
 
 # This machine's ~/.local/share is root-owned; keep uv's managed Pythons in a
 # user-writable location. Harmless on machines where the default works.
 export UV_PYTHON_INSTALL_DIR := $(HOME)/.uv/python
+SECRETS_FILE ?= .env
 
 # ---------------------------------------------------------------------------
 # Setup

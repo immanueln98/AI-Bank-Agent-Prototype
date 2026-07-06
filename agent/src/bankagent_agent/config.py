@@ -7,12 +7,18 @@ Swapping STT/LLM/TTS is a .env change, never a code change:
 
 Adding e.g. direct Deepgram/Cartesia plugins later = another branch in the
 factories below.
+
+Credentials are passed to the providers explicitly from AgentSettings (which
+reads .env), so nothing here depends on the variables being exported into the
+process environment - pytest, honcho, and docker all behave the same.
 """
 
 from pathlib import Path
 from typing import Literal
 
 from livekit.agents import inference, llm, stt, tts
+from livekit.agents.types import NOT_GIVEN
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,6 +31,7 @@ class AgentSettings(BaseSettings):
 
     llm_provider: Literal["inference", "anthropic"] = "inference"
     llm_model: str = "openai/gpt-4.1-mini"
+    anthropic_api_key: SecretStr | None = None  # only when llm_provider=anthropic
     stt_model: str = "deepgram/nova-3"
     tts_model: str = "cartesia/sonic-3"
     tts_voice: str = ""  # empty = provider default voice
@@ -39,15 +46,32 @@ def build_llm(settings: AgentSettings) -> llm.LLM:
     if settings.llm_provider == "anthropic":
         from livekit.plugins import anthropic  # lazy: not needed on the default path
 
-        return anthropic.LLM(model=settings.llm_model)
-    return inference.LLM(model=settings.llm_model)
+        return anthropic.LLM(
+            model=settings.llm_model,
+            # NOT_GIVEN falls back to the ANTHROPIC_API_KEY environment variable.
+            api_key=settings.anthropic_api_key.get_secret_value()
+            if settings.anthropic_api_key
+            else NOT_GIVEN,
+        )
+    return inference.LLM(
+        model=settings.llm_model,
+        api_key=settings.livekit_api_key or None,
+        api_secret=settings.livekit_api_secret or None,
+    )
 
 
 def build_stt(settings: AgentSettings) -> stt.STT:
-    return inference.STT(model=settings.stt_model)
+    return inference.STT(
+        model=settings.stt_model,
+        api_key=settings.livekit_api_key or NOT_GIVEN,
+        api_secret=settings.livekit_api_secret or NOT_GIVEN,
+    )
 
 
 def build_tts(settings: AgentSettings) -> tts.TTS:
-    if settings.tts_voice:
-        return inference.TTS(model=settings.tts_model, voice=settings.tts_voice)
-    return inference.TTS(model=settings.tts_model)
+    return inference.TTS(
+        model=settings.tts_model,
+        voice=settings.tts_voice or NOT_GIVEN,
+        api_key=settings.livekit_api_key or NOT_GIVEN,
+        api_secret=settings.livekit_api_secret or NOT_GIVEN,
+    )

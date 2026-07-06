@@ -43,22 +43,35 @@ async def test_correct_details_verify_and_hand_off(llm, session_data) -> None:
             user_input="My account number is 1002345678 and my ID ends in 9087."
         )
 
-        result.expect.skip_next_event_if(type="message", role="assistant")
-        (result.expect.next_event().is_function_call(name="verify_identity"))
-        result.expect.next_event().is_function_call_output()
-        result.expect.next_event().is_agent_handoff(new_agent_type=BankingAgent)
+        # Order-insensitive: the LLM may interleave assistant messages between
+        # the tool call, its output, and the handoff.
+        result.expect.contains_function_call(name="verify_identity")
+        result.expect.contains_agent_handoff(new_agent_type=BankingAgent)
         assert session.userdata.verified is True
+        assert session.userdata.customer_id == "cust-001"
 
 
 async def test_failed_verification_never_discloses_and_offers_human(llm, session_data) -> None:
+    # The LLM may spend a turn asking for details instead of calling the tool,
+    # so keep supplying wrong credentials until three attempts have registered.
+    wrong_attempts = [
+        "What's my balance? My account number is 1002345678 and my ID ends in 0000.",
+        "Let's try again: account 1002345678, ID ending 1111.",
+        "One more time: account 1002345678, ID ending 2222.",
+        "Try it with account 1002345678 and ID ending 3333.",
+        "Please check again: account 1002345678, ID ending 4444.",
+    ]
     async with AgentSession[SessionData](llm=llm, userdata=session_data) as session:
         await session.start(IdentityAgent())
-        await session.run(user_input="What's my balance? Account 1002345678, ID ends 0000.")
-        await session.run(user_input="Try again: account 1002345678, ID ends 1111.")
-        result = await session.run(user_input="Once more: account 1002345678, ID ending 2222.")
+        result = None
+        for user_input in wrong_attempts:
+            result = await session.run(user_input=user_input)
+            if session.userdata.failed_verification_attempts >= 3:
+                break
 
         assert session.userdata.verified is False
         assert session.userdata.failed_verification_attempts >= 3
+        assert result is not None
         await (
             result.expect[-1]
             .is_message(role="assistant")
