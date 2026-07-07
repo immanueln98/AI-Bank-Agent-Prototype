@@ -28,5 +28,6 @@ transcripts/
 # Pitch materials stay local; the built site is hosted from the orphan
 # gh-pages branch only.
 docs/PITCH.md
+docs/PRICING.md
 docs/pitch-site.html
 docs/index.html
