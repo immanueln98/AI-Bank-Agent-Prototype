@@ -17,6 +17,10 @@ services:
         required: false
     environment:
       LOG_FORMAT: json
+    volumes:
+      # The agent writes masked transcripts; the backend serves them to the
+      # supervisor view. Both mount the same volume at /app/transcripts.
+      - transcripts-data:/app/transcripts
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 5s
@@ -33,6 +37,8 @@ services:
     environment:
       BACKEND_BASE_URL: http://backend:8000
       LOG_FORMAT: json
+    volumes:
+      - transcripts-data:/app/transcripts
     depends_on:
       backend:
         condition: service_healthy
@@ -48,3 +54,6 @@ services:
       - "8080:80"
     depends_on:
       - backend
+
+volumes:
+  transcripts-data:

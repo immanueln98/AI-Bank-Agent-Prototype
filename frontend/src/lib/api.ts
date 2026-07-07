@@ -1,4 +1,11 @@
-import type { CallMetrics, CallRecord, ScenarioInfo, TokenResponse } from './types';
+import type {
+  CallMetrics,
+  CallRecord,
+  ScenarioInfo,
+  TokenResponse,
+  TranscriptDetail,
+  TranscriptMeta,
+} from './types';
 
 // Default is same-origin: the Vite dev server proxies /api to the backend
 // (see vite.config.ts), which is what lets one ngrok tunnel share the whole
@@ -23,6 +30,14 @@ export function fetchCalls(): Promise<CallRecord[]> {
 
 export function fetchCallMetrics(): Promise<CallMetrics> {
   return request<CallMetrics>('/api/v1/calls/metrics');
+}
+
+export function fetchTranscripts(): Promise<TranscriptMeta[]> {
+  return request<TranscriptMeta[]>('/api/v1/transcripts');
+}
+
+export function fetchTranscript(sessionId: string): Promise<TranscriptDetail> {
+  return request<TranscriptDetail>(`/api/v1/transcripts/${encodeURIComponent(sessionId)}`);
 }
 
 export function fetchToken(scenario: string): Promise<TokenResponse> {

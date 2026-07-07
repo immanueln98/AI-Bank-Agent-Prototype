@@ -27,6 +27,7 @@ from .bank_client import BankAPIError, BankClient
 from .call_record import build_call_record
 from .config import AgentSettings, build_llm, build_stt, build_tts
 from .events import ToolEventEmitter
+from .latency import LatencyCollector
 from .session_state import SessionData
 from .transcripts import TranscriptRecorder
 
@@ -74,10 +75,12 @@ async def entrypoint(ctx: JobContext) -> None:
     recorder.start(session)
 
     usage = metrics.UsageCollector()
+    latency = LatencyCollector()
 
     @session.on("metrics_collected")
     def _on_metrics(ev: MetricsCollectedEvent) -> None:
         usage.collect(ev.metrics)
+        latency.collect(ev.metrics)
 
     async def _shutdown() -> None:
         recorder.finalize(
@@ -90,7 +93,12 @@ async def entrypoint(ctx: JobContext) -> None:
                 "usage": str(usage.get_summary()),
             }
         )
-        record = build_call_record(userdata, event_log, usage_summary=str(usage.get_summary()))
+        record = build_call_record(
+            userdata,
+            event_log,
+            usage_summary=str(usage.get_summary()),
+            latency=latency.summary(),
+        )
         try:
             await bank.post_call_record(record)
             log.info("call_record_posted", outcome=record.outcome, tools=record.tools_used)

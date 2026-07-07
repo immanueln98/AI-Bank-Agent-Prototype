@@ -119,6 +119,22 @@ class TokenResponse(BaseModel):
 CallOutcome = Literal["contained", "escalated", "verification_failed", "abandoned"]
 
 
+class CallLatencyStats(BaseModel):
+    """Per-call conversational latency, from LiveKit's per-turn metrics.
+
+    A turn's response latency = end-of-utterance delay (turn detection)
+    + LLM time-to-first-token + TTS time-to-first-byte, joined by speech id.
+    Only turns with all three parts are counted.
+    """
+
+    turns: int
+    eou_median_s: float
+    llm_ttft_median_s: float
+    tts_ttfb_median_s: float
+    total_median_s: float
+    total_p95_s: float
+
+
 class CallRecord(BaseModel):
     """End-of-call operational record the agent posts to the backend.
 
@@ -146,6 +162,7 @@ class CallRecord(BaseModel):
     tool_failures: int = 0
     events: list[ToolEvent] = Field(default_factory=list)  # masked audit trail
     usage_summary: str | None = None  # LLM/STT/TTS usage for cost tracking
+    latency: CallLatencyStats | None = None  # None for text-only sessions
 
 
 class CallMetrics(BaseModel):
@@ -160,6 +177,30 @@ class CallMetrics(BaseModel):
     containment_rate: float | None = None  # contained / total, None until data
     avg_duration_seconds: float | None = None
     avg_tool_calls: float | None = None
+    median_response_latency_s: float | None = None  # across calls with voice latency data
+
+
+class TranscriptMeta(BaseModel):
+    """One row in the supervisor's transcript list - summary of a JSONL file."""
+
+    session_id: str
+    date: str  # YYYY-MM-DD directory name
+    modified_at: str  # ISO 8601, UTC
+    messages: int = 0
+    tool_events: int = 0
+    duration_seconds: float | None = None  # from the session_end line, if present
+    customer: str | None = None  # verified customer first name, if any
+    escalated: bool = False
+    ended: bool = False  # has a session_end line (cleanly finalized)
+
+
+class TranscriptDetail(BaseModel):
+    """A full parsed transcript. Entries are the raw (PII-masked) JSONL records:
+    kind=message|tool_event|session_end."""
+
+    session_id: str
+    date: str
+    entries: list[dict[str, object]]
 
 
 class ScenarioInfo(BaseModel):
