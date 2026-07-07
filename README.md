@@ -149,9 +149,16 @@ path remains.
 
 **After hanging up, switch to the Supervisor view** (toggle in the header): the call you just
 made appears in the call log with its outcome (contained / escalated / verification failed),
-duration, and a drill-down into the full masked audit trail — plus running KPIs (containment
-rate, average handle time, escalations, lockouts). This is the ops story: the AI channel is
-managed with the same numbers as the human one.
+duration, response latency, and a drill-down into the full masked audit trail — plus running
+KPIs (containment rate, average handle time, escalations, lockouts, median response latency).
+Below the call log, the **Transcripts** panel lists every on-disk transcript (they survive
+restarts and include terminal-console calls) with the full masked conversation, tool events,
+and end-of-call summary one click away. This is the ops story: the AI channel is managed
+with the same numbers as the human one.
+
+Latency is measured per turn the way a caller experiences it — turn-detection delay + LLM
+time-to-first-token + TTS time-to-first-audio, joined per speech turn — and each call record
+carries the median and p95 breakdown.
 
 ## How the guardrails work (not just prompts)
 
@@ -172,7 +179,9 @@ managed with the same numbers as the human one.
   only); definitive failures raise `ToolError` with an instruction for what the agent should
   *say* (apologise, offer a human) instead of crashing or going silent.
 - **Every session leaves a masked transcript** (`transcripts/<date>/<session>.jsonl`):
-  turns, tool events, and an end-of-call summary — QA/replay ready.
+  turns, tool events, and an end-of-call summary — QA/replay ready, and browsable in the
+  Supervisor view (the backend serves the same directory read-only; docker compose shares
+  it via a volume).
 - **Every call posts a structured record** to the backend at session end: outcome
   (contained/escalated/verification-failed/abandoned), verification attempts, security
   lockouts, tools used, and the masked event log — powering the Supervisor dashboard's

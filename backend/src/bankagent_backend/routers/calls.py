@@ -10,6 +10,8 @@ call-centre reporting (calls handled, containment, AHT are the same KPIs
 used for human agents).
 """
 
+import statistics
+
 from fastapi import APIRouter, HTTPException
 
 from bankagent_shared import get_logger
@@ -50,6 +52,7 @@ def call_metrics() -> CallMetrics:
     by_outcome = {"contained": 0, "escalated": 0, "verification_failed": 0, "abandoned": 0}
     for record in _records:
         by_outcome[record.outcome] += 1
+    latencies = [r.latency.total_median_s for r in _records if r.latency is not None]
     return CallMetrics(
         total_calls=total,
         contained=by_outcome["contained"],
@@ -60,6 +63,7 @@ def call_metrics() -> CallMetrics:
         containment_rate=round(by_outcome["contained"] / total, 3),
         avg_duration_seconds=round(sum(r.duration_seconds for r in _records) / total, 1),
         avg_tool_calls=round(sum(r.tool_calls for r in _records) / total, 1),
+        median_response_latency_s=round(statistics.median(latencies), 3) if latencies else None,
     )
 
 

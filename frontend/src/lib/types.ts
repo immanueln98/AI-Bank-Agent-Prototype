@@ -44,6 +44,16 @@ export interface TokenResponse {
 
 export type CallOutcome = 'contained' | 'escalated' | 'verification_failed' | 'abandoned';
 
+/** Mirrors CallLatencyStats in shared/src/bankagent_shared/models.py. */
+export interface CallLatencyStats {
+  turns: number;
+  eou_median_s: number;
+  llm_ttft_median_s: number;
+  tts_ttfb_median_s: number;
+  total_median_s: number;
+  total_p95_s: number;
+}
+
 /** Mirrors CallRecord in shared/src/bankagent_shared/models.py. */
 export interface CallRecord {
   session_id: string;
@@ -65,6 +75,7 @@ export interface CallRecord {
   tool_failures: number;
   events: ToolEvent[];
   usage_summary: string | null;
+  latency: CallLatencyStats | null;
 }
 
 /** Mirrors CallMetrics in shared/src/bankagent_shared/models.py. */
@@ -78,4 +89,46 @@ export interface CallMetrics {
   containment_rate: number | null;
   avg_duration_seconds: number | null;
   avg_tool_calls: number | null;
+  median_response_latency_s: number | null;
+}
+
+/** Mirrors TranscriptMeta in shared/src/bankagent_shared/models.py. */
+export interface TranscriptMeta {
+  session_id: string;
+  date: string;
+  modified_at: string;
+  messages: number;
+  tool_events: number;
+  duration_seconds: number | null;
+  customer: string | null;
+  escalated: boolean;
+  ended: boolean;
+}
+
+/** One parsed JSONL transcript line (all strings pre-masked by the agent). */
+export interface TranscriptEntry {
+  kind: 'message' | 'tool_event' | 'session_end' | string;
+  ts?: string;
+  // kind=message
+  role?: string;
+  content?: string;
+  interrupted?: boolean;
+  // kind=tool_event (same shape as ToolEvent)
+  type?: string;
+  tool?: string | null;
+  args_masked?: Record<string, unknown> | null;
+  result_summary?: string | null;
+  error?: string | null;
+  duration_ms?: number | null;
+  // kind=session_end
+  duration_seconds?: number;
+  verified_customer?: string | null;
+  escalated?: boolean;
+  usage?: string;
+}
+
+export interface TranscriptDetail {
+  session_id: string;
+  date: string;
+  entries: TranscriptEntry[];
 }

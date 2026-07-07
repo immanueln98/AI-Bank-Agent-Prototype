@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from bankagent_shared import ToolEvent
-from bankagent_shared.models import CallOutcome, CallRecord
+from bankagent_shared.models import CallLatencyStats, CallOutcome, CallRecord
 
 from .session_state import SessionData
 
@@ -43,6 +43,7 @@ def build_call_record(
     userdata: SessionData,
     events: list[ToolEvent],
     usage_summary: str | None = None,
+    latency: CallLatencyStats | None = None,
 ) -> CallRecord:
     ended_at = datetime.now(UTC)
     tools_used: list[str] = []
@@ -69,4 +70,5 @@ def build_call_record(
         tool_failures=sum(1 for e in events if e.type == "tool_call_failed"),
         events=events,
         usage_summary=usage_summary,
+        latency=latency,
     )

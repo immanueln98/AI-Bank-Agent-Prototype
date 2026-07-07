@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
-import { fetchCallMetrics, fetchCalls } from '../lib/api';
-import type { CallMetrics, CallOutcome, CallRecord, ToolEvent } from '../lib/types';
+import { fetchCallMetrics, fetchCalls, fetchTranscript, fetchTranscripts } from '../lib/api';
+import type {
+  CallMetrics,
+  CallOutcome,
+  CallRecord,
+  ToolEvent,
+  TranscriptDetail,
+  TranscriptEntry,
+  TranscriptMeta,
+} from '../lib/types';
 
 const POLL_MS = 4000;
 
@@ -19,16 +27,18 @@ const OUTCOME_LABELS: Record<CallOutcome, string> = {
 export function SupervisorPanel() {
   const [metrics, setMetrics] = useState<CallMetrics | null>(null);
   const [calls, setCalls] = useState<CallRecord[]>([]);
+  const [transcripts, setTranscripts] = useState<TranscriptMeta[]>([]);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     const load = () => {
-      Promise.all([fetchCallMetrics(), fetchCalls()])
-        .then(([m, c]) => {
+      Promise.all([fetchCallMetrics(), fetchCalls(), fetchTranscripts()])
+        .then(([m, c, t]) => {
           if (cancelled) return;
           setMetrics(m);
           setCalls(c);
+          setTranscripts(t);
           setError(false);
         })
         .catch(() => !cancelled && setError(true));
@@ -86,6 +96,16 @@ export function SupervisorPanel() {
           detail="3× failed verification"
           accent={metrics && metrics.lockouts > 0 ? 'red' : undefined}
         />
+        <KpiTile
+          label="Response latency"
+          value={
+            metrics?.median_response_latency_s != null
+              ? `${metrics.median_response_latency_s.toFixed(1)}s`
+              : '—'
+          }
+          detail="median, caller stops → agent speaks"
+          accent="teal"
+        />
       </div>
 
       <section className="panel">
@@ -102,6 +122,25 @@ export function SupervisorPanel() {
           <div className="call-log">
             {calls.map((call) => (
               <CallRow key={call.session_id} call={call} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="panel">
+        <header className="panel__header">
+          <h2>Transcripts</h2>
+          <span className="state-badge">on-disk record · PII-masked · survives restarts</span>
+        </header>
+        {transcripts.length === 0 ? (
+          <p className="transcript__empty supervisor__empty">
+            No transcripts yet. Every call (browser or terminal console) writes a masked JSONL
+            transcript the moment it happens — they appear here.
+          </p>
+        ) : (
+          <div className="call-log">
+            {transcripts.map((t) => (
+              <TranscriptRow key={t.session_id} meta={t} />
             ))}
           </div>
         )}
@@ -148,10 +187,22 @@ function CallRow({ call }: { call: CallRecord }) {
         <span className="call-row__meta">
           {formatDuration(call.duration_seconds)} · {call.tool_calls} tool call
           {call.tool_calls === 1 ? '' : 's'}
+          {call.latency && <span> · resp {call.latency.total_median_s.toFixed(1)}s</span>}
           {call.escalation_ref && <span className="mono"> · {call.escalation_ref}</span>}
         </span>
       </summary>
       <div className="call-row__audit">
+        {call.latency && (
+          <p className="latency-line" title="Per-turn response latency, joined by speech id">
+            <b>Latency</b> (median over {call.latency.turns} turn
+            {call.latency.turns === 1 ? '' : 's'}): turn detect{' '}
+            {call.latency.eou_median_s.toFixed(2)}s · LLM first token{' '}
+            {call.latency.llm_ttft_median_s.toFixed(2)}s · TTS first audio{' '}
+            {call.latency.tts_ttfb_median_s.toFixed(2)}s → total{' '}
+            <b>{call.latency.total_median_s.toFixed(2)}s</b> (p95{' '}
+            {call.latency.total_p95_s.toFixed(2)}s)
+          </p>
+        )}
         <h3>Audit trail</h3>
         {call.events.length === 0 ? (
           <p className="transcript__empty">No tool activity on this call.</p>
@@ -194,6 +245,92 @@ function AuditLine({ event }: { event: ToolEvent }) {
       {event.error && <span className="activity-card__error">{event.error}</span>}
     </li>
   );
+}
+
+function TranscriptRow({ meta }: { meta: TranscriptMeta }) {
+  const [detail, setDetail] = useState<TranscriptDetail | 'loading' | 'error' | null>(null);
+
+  const onToggle = (event: React.SyntheticEvent<HTMLDetailsElement>) => {
+    if (!event.currentTarget.open || detail !== null) return;
+    setDetail('loading');
+    fetchTranscript(meta.session_id)
+      .then(setDetail)
+      .catch(() => setDetail('error'));
+  };
+
+  const when = new Date(meta.modified_at);
+  return (
+    <details className="call-row" onToggle={onToggle}>
+      <summary>
+        <span className="mono call-row__time">
+          {meta.date} {when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </span>
+        <span className="call-row__who">
+          {meta.customer ?? 'Unverified caller'}
+          <span className="call-row__scenario mono"> · {meta.session_id}</span>
+        </span>
+        {meta.escalated && <span className="outcome-badge outcome-badge--escalated">Escalated</span>}
+        {!meta.ended && <span className="outcome-badge">No clean end</span>}
+        <span className="call-row__meta">
+          {meta.duration_seconds != null && <>{formatDuration(meta.duration_seconds)} · </>}
+          {meta.messages} turns · {meta.tool_events} tool events
+        </span>
+      </summary>
+      <div className="call-row__audit">
+        {detail === 'loading' && <p className="transcript__empty">Loading transcript…</p>}
+        {detail === 'error' && (
+          <p className="transcript__empty">Could not load this transcript. Try again.</p>
+        )}
+        {detail !== null && typeof detail === 'object' && (
+          <ol className="ts-lines">
+            {detail.entries.map((entry, index) => (
+              <TranscriptLine key={index} entry={entry} />
+            ))}
+          </ol>
+        )}
+      </div>
+    </details>
+  );
+}
+
+function TranscriptLine({ entry }: { entry: TranscriptEntry }) {
+  if (entry.kind === 'message') {
+    const caller = entry.role === 'user';
+    return (
+      <li className={`ts-msg ${caller ? 'ts-msg--caller' : 'ts-msg--agent'}`}>
+        <span className="ts-msg__who">{caller ? 'Caller' : 'Agent'}</span>
+        <span className="ts-msg__text">
+          {entry.content}
+          {entry.interrupted && <em className="ts-msg__interrupted"> (interrupted)</em>}
+        </span>
+      </li>
+    );
+  }
+  if (entry.kind === 'tool_event') {
+    return (
+      <li className={`audit-line audit-line--${entry.type ?? 'tool_event'}`}>
+        <span className="audit-line__type">{(entry.type ?? 'tool event').replaceAll('_', ' ')}</span>
+        {entry.tool && <span className="mono audit-line__tool">{entry.tool}</span>}
+        {entry.duration_ms != null && (
+          <span className="audit-line__time mono">{entry.duration_ms} ms</span>
+        )}
+        {entry.result_summary && (
+          <span className="audit-line__summary">{entry.result_summary}</span>
+        )}
+        {entry.error && <span className="activity-card__error">{entry.error}</span>}
+      </li>
+    );
+  }
+  if (entry.kind === 'session_end') {
+    return (
+      <li className="ts-end mono">
+        call ended · {entry.duration_seconds != null && <>{formatDuration(entry.duration_seconds)} · </>}
+        {entry.verified_customer ? `verified: ${entry.verified_customer}` : 'unverified'}
+        {entry.escalated ? ' · escalated' : ''}
+      </li>
+    );
+  }
+  return null;
 }
 
 function formatDuration(seconds: number): string {
