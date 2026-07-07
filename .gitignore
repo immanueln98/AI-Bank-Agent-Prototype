@@ -24,3 +24,9 @@ transcripts/
 .DS_Store
 .idea/
 .vscode/
+
+# Pitch materials stay local; the built site is hosted from the orphan
+# gh-pages branch only.
+docs/PITCH.md
+docs/pitch-site.html
+docs/index.html

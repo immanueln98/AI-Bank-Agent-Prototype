@@ -9,10 +9,6 @@ answers are grounded, not hallucinated. A **Supervisor view** shows the contact-
 manager's side: containment rate, average handle time, escalations, and a per-call
 PII-masked audit trail.
 
-> Pitching this to a bank? [`docs/PITCH.md`](docs/PITCH.md) is the evidence pack: verified
-> deployments at other banks, the security-guarantee talking points, and the SA regulatory
-> position, with sources.
-
 > **POC status:** the "core banking system" is a mock FastAPI service with fixture data.
 > No real customer data, no real money movement, free-tier infrastructure only.
 > [Path to production](#path-to-production) covers what changes for a real deployment.
@@ -65,7 +61,6 @@ shared/    Pydantic API models, PII redaction, structlog setup (used by both ser
 backend/   Mock core-banking API (FastAPI) + LiveKit token endpoint + call records/KPIs
 agent/     Voice agent worker (livekit-agents): agents, tools, events, transcripts
 frontend/  Demo console (Vite + React + TS): call console + supervisor dashboard
-docs/      Pitch evidence pack (PITCH.md)
 ```
 
 ## Quickstart
