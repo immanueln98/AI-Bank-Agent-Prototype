@@ -10,7 +10,8 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:8000',
     },
-    // Vite rejects requests whose Host header it doesn't know; allow ngrok's.
-    allowedHosts: ['.ngrok-free.app', '.ngrok.app', '.ngrok.dev', '.ngrok.io'],
+    // Vite rejects requests whose Host header it doesn't know; allow ngrok's
+    // domains (free-tier URLs come from ngrok-free.app or ngrok-free.dev).
+    allowedHosts: ['.ngrok-free.app', '.ngrok-free.dev', '.ngrok.app', '.ngrok.dev', '.ngrok.io'],
   },
 });
