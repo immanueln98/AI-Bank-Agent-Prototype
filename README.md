@@ -114,6 +114,11 @@ dispatches it for every inbound call. Phone calls land in `call-*` rooms, get ta
 `channel=sip`, and show a ☎ chip in the Supervisor view — call records, latency, and
 masked transcripts all work identically.
 
+> **The worker registers its name once, at startup.** After changing `AGENT_NAME` (or
+> pulling a change that touches dispatch), fully restart `make dev` — the dev-mode file
+> watcher reloads code but does not re-register the worker, and a stale registration
+> means calls ring into an empty room.
+
 Three cost tiers; the LiveKit side is the same for all of them:
 
 **Free — softphone, no number at all.** LiveKit's trunk accepts direct SIP calls, so you
