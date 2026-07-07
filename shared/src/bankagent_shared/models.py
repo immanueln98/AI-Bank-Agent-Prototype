@@ -117,6 +117,20 @@ class TokenResponse(BaseModel):
 
 
 CallOutcome = Literal["contained", "escalated", "verification_failed", "abandoned"]
+CallChannel = Literal["sip", "web", "console"]
+
+# Room-name prefixes are the channel contract: the SIP dispatch rule creates
+# "call-*" rooms (scripts/setup_sip.py), the demo token endpoint "demo-*".
+SIP_ROOM_PREFIX = "call-"
+WEB_ROOM_PREFIX = "demo-"
+
+
+def channel_from_room(room_name: str) -> CallChannel:
+    if room_name.startswith(SIP_ROOM_PREFIX):
+        return "sip"
+    if room_name.startswith(WEB_ROOM_PREFIX):
+        return "web"
+    return "console"
 
 
 class CallLatencyStats(BaseModel):
@@ -146,6 +160,7 @@ class CallRecord(BaseModel):
     session_id: str
     room: str
     scenario: str | None = None  # parsed from demo room names ("demo-<id>-…")
+    channel: CallChannel = "web"  # sip = dialed in over the phone
     started_at: str  # ISO 8601, UTC
     ended_at: str
     duration_seconds: float
@@ -186,6 +201,7 @@ class TranscriptMeta(BaseModel):
     session_id: str
     date: str  # YYYY-MM-DD directory name
     modified_at: str  # ISO 8601, UTC
+    channel: CallChannel | None = None  # from the session_end room name, if present
     messages: int = 0
     tool_events: int = 0
     duration_seconds: float | None = None  # from the session_end line, if present

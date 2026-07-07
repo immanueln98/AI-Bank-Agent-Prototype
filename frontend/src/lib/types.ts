@@ -43,6 +43,7 @@ export interface TokenResponse {
 }
 
 export type CallOutcome = 'contained' | 'escalated' | 'verification_failed' | 'abandoned';
+export type CallChannel = 'sip' | 'web' | 'console';
 
 /** Mirrors CallLatencyStats in shared/src/bankagent_shared/models.py. */
 export interface CallLatencyStats {
@@ -59,6 +60,7 @@ export interface CallRecord {
   session_id: string;
   room: string;
   scenario: string | null;
+  channel: CallChannel;
   started_at: string;
   ended_at: string;
   duration_seconds: number;
@@ -97,6 +99,7 @@ export interface TranscriptMeta {
   session_id: string;
   date: string;
   modified_at: string;
+  channel: CallChannel | null;
   messages: number;
   tool_events: number;
   duration_seconds: number | null;

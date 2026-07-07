@@ -9,8 +9,10 @@ from uuid import uuid4
 
 from fastapi import APIRouter
 from livekit import api
+from livekit.protocol.agent_dispatch import RoomAgentDispatch
+from livekit.protocol.room import RoomConfiguration
 
-from bankagent_shared.models import TokenRequest, TokenResponse
+from bankagent_shared.models import WEB_ROOM_PREFIX, TokenRequest, TokenResponse
 
 from ..config import BackendSettings
 
@@ -21,7 +23,7 @@ router = APIRouter()
 def create_token(req: TokenRequest) -> TokenResponse:
     settings = BackendSettings()
     scenario = (req.scenario or "adhoc").strip().lower() or "adhoc"
-    room = f"demo-{scenario}-{uuid4().hex[:6]}"
+    room = f"{WEB_ROOM_PREFIX}{scenario}-{uuid4().hex[:6]}"
     identity = f"caller-{uuid4().hex[:8]}"
 
     token = (
@@ -36,6 +38,11 @@ def create_token(req: TokenRequest) -> TokenResponse:
                 can_subscribe=True,
                 can_publish_data=True,
             )
+        )
+        # The worker uses explicit dispatch (it also serves the SIP path), so
+        # the browser room must request the agent by name or nobody answers.
+        .with_room_config(
+            RoomConfiguration(agents=[RoomAgentDispatch(agent_name=settings.agent_name)])
         )
         .to_jwt()
     )

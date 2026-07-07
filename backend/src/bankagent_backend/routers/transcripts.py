@@ -21,7 +21,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 
 from bankagent_shared import get_logger
-from bankagent_shared.models import TranscriptDetail, TranscriptMeta
+from bankagent_shared.models import TranscriptDetail, TranscriptMeta, channel_from_room
 
 from ..config import BackendSettings
 
@@ -66,9 +66,11 @@ def _meta_for(path: Path) -> TranscriptMeta:
     end = next((e for e in entries if e.get("kind") == "session_end"), None)
     duration = end.get("duration_seconds") if end else None
     customer = end.get("verified_customer") if end else None
+    room = end.get("room") if end else None
     return TranscriptMeta(
         session_id=path.stem,
         date=path.parent.name,
+        channel=channel_from_room(str(room)) if room else None,
         modified_at=datetime.fromtimestamp(path.stat().st_mtime, tz=UTC).isoformat(
             timespec="seconds"
         ),

@@ -110,6 +110,31 @@ that burn your LiveKit free-tier minutes and inference credit — share privatel
 basic-auth flag, and note the free plan allows ~5 concurrent sessions. Free ngrok URLs
 change on every restart, which doubles as cheap access revocation.
 
+### Dial in by phone (SIP)
+
+The same agent answers real phone calls — no code changes, one setup script. The worker
+registers under an explicit dispatch name (`AGENT_NAME` in `.env`, default
+`meridian-bank-agent`): browser tokens request it per room, and a SIP dispatch rule
+dispatches it for every inbound call. Phone calls land in `call-*` rooms, get tagged
+`channel=sip`, and show a ☎ chip in the Supervisor view — call records, latency, and
+masked transcripts all work identically.
+
+1. **Provider side (e.g. Twilio):** buy a number → Elastic SIP Trunking → create a trunk →
+   set its **Origination URI** to your LiveKit project's SIP URI (LiveKit Cloud dashboard →
+   Settings → Project → SIP URI, e.g. `sip:<id>.sip.livekit.cloud;transport=tcp`) → assign
+   the number to the trunk.
+2. **LiveKit side (this repo):**
+   ```bash
+   make setup-sip NUMBERS=+27871234567     # creates inbound trunk + dispatch rule
+   ```
+   Re-running replaces both (safe after number changes). `hide_phone_number` is on, so
+   caller numbers stay out of room names, transcripts, and dashboards.
+3. Keep `make dev` running and dial the number.
+
+South African numbers on Twilio require a regulatory bundle (identity + proof of address)
+before purchase; approval takes a few days. Any country's number works identically — the
+trunk doesn't care where the number lives.
+
 ### Make targets
 
 | Target | What it does |

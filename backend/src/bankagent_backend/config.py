@@ -12,6 +12,10 @@ class BackendSettings(BaseSettings):
     livekit_api_key: str = "not-configured"
     livekit_api_secret: str = "not-configured-not-configured-secret"
 
+    # Must match the worker's AGENT_NAME (both read the same .env): browser
+    # tokens request this agent by name now that dispatch is explicit.
+    agent_name: str = "meridian-bank-agent"
+
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:8080"]
     log_format: Literal["console", "json"] = "console"
     # Where the agent writes masked call transcripts (same default as the

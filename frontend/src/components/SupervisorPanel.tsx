@@ -181,6 +181,7 @@ function CallRow({ call }: { call: CallRecord }) {
           {call.customer_first_name ?? 'Unverified caller'}
           {call.scenario && <span className="call-row__scenario"> · {call.scenario}</span>}
         </span>
+        {call.channel === 'sip' && <span className="channel-chip">☎ phone</span>}
         <span className={`outcome-badge outcome-badge--${call.outcome}`}>
           {OUTCOME_LABELS[call.outcome]}
         </span>
@@ -269,6 +270,7 @@ function TranscriptRow({ meta }: { meta: TranscriptMeta }) {
           {meta.customer ?? 'Unverified caller'}
           <span className="call-row__scenario mono"> · {meta.session_id}</span>
         </span>
+        {meta.channel === 'sip' && <span className="channel-chip">☎ phone</span>}
         {meta.escalated && <span className="outcome-badge outcome-badge--escalated">Escalated</span>}
         {!meta.ended && <span className="outcome-badge">No clean end</span>}
         <span className="call-row__meta">

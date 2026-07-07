@@ -2,7 +2,7 @@
 # The services read .env themselves, so this is convenience, not a requirement.
 -include .env
 .PHONY: setup dev run-agent run-backend run-frontend lint format typecheck \
-        test test-cov test-behavioral docker-up clean
+        test test-cov test-behavioral docker-up clean setup-sip
 
 # This machine's ~/.local/share is root-owned; keep uv's managed Pythons in a
 # user-writable location. Harmless on machines where the default works.
@@ -35,6 +35,9 @@ run-frontend:
 
 console: ## Talk to the agent in the terminal (no browser/frontend needed)
 	uv run python -m bankagent_agent.main console
+
+setup-sip: ## Create LiveKit inbound trunk + dispatch rule (NUMBERS="+27..." required)
+	uv run python scripts/setup_sip.py --numbers $(NUMBERS)
 
 # ---------------------------------------------------------------------------
 # Quality
