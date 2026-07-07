@@ -119,21 +119,36 @@ dispatches it for every inbound call. Phone calls land in `call-*` rooms, get ta
 `channel=sip`, and show a ☎ chip in the Supervisor view — call records, latency, and
 masked transcripts all work identically.
 
-1. **Provider side (e.g. Twilio):** buy a number → Elastic SIP Trunking → create a trunk →
-   set its **Origination URI** to your LiveKit project's SIP URI (LiveKit Cloud dashboard →
-   Settings → Project → SIP URI, e.g. `sip:<id>.sip.livekit.cloud;transport=tcp`) → assign
-   the number to the trunk.
-2. **LiveKit side (this repo):**
-   ```bash
-   make setup-sip NUMBERS=+27871234567     # creates inbound trunk + dispatch rule
-   ```
-   Re-running replaces both (safe after number changes). `hide_phone_number` is on, so
-   caller numbers stay out of room names, transcripts, and dashboards.
-3. Keep `make dev` running and dial the number.
+Three cost tiers; the LiveKit side is the same for all of them:
 
-South African numbers on Twilio require a regulatory bundle (identity + proof of address)
-before purchase; approval takes a few days. Any country's number works identically — the
-trunk doesn't care where the number lives.
+**Free — softphone, no number at all.** LiveKit's trunk accepts direct SIP calls, so you
+can validate the entire phone path without a provider:
+
+```bash
+make setup-sip NUMBERS=+15550100 AUTH=demo:pick-a-password
+# then from Linphone/Zoiper (free apps), place a direct SIP call to:
+#   sip:+15550100@<your-project>.sip.livekit.cloud
+# entering the username/password when challenged
+```
+
+**~$1/month — a real number from a budget DID provider** (VoIP.ms, Telnyx): buy a DID and
+point its SIP forwarding / origination at your LiveKit SIP URI. Real PSTN dial-in for
+pocket change; fine for rehearsals.
+
+**The pitch tier — Twilio** (the provider LiveKit documents first-class):
+1. Buy a number → Elastic SIP Trunking → create a trunk → set its **Origination URI** to
+   your LiveKit project's SIP URI (LiveKit Cloud dashboard → Settings → Project → SIP URI,
+   e.g. `sip:<id>.sip.livekit.cloud;transport=tcp`) → assign the number to the trunk.
+2. `make setup-sip NUMBERS=+27871234567` (no `AUTH` — Twilio elastic trunks can't answer
+   digest challenges; the trunk is scoped to your number instead).
+3. Keep `make dev` running and dial.
+
+Re-running `make setup-sip` replaces the trunk + rule (safe after number changes).
+`hide_phone_number` is on, so caller numbers stay out of room names, transcripts, and
+dashboards. South African numbers on Twilio require a regulatory bundle (identity + proof
+of address) approved before purchase — start that early; any country's number works
+identically in the meantime. SIP participant minutes draw on your LiveKit plan: watch the
+dashboard meter.
 
 ### Make targets
 
@@ -145,6 +160,7 @@ trunk doesn't care where the number lives.
 | `make lint` `format` `typecheck` | ruff + eslint / formatters / mypy + tsc |
 | `make test` / `make test-cov` | unit tests (no credentials needed) / with coverage |
 | `make test-behavioral` | agent-behavior tests against a live LLM (needs `.env` creds) |
+| `make setup-sip NUMBERS=+27…` | create the LiveKit inbound trunk + agent dispatch rule for phone calls |
 | `make docker-up` | full stack via docker compose (frontend on :8080) |
 
 ## Demo walkthrough (5 scripted scenarios)
@@ -232,6 +248,7 @@ Everything is env-driven (`.env`, see `.env.example`):
 | `LLM_PROVIDER` | `inference` | `inference` (free credit) or `anthropic` (direct Claude) |
 | `LLM_MODEL` | `openai/gpt-4.1-mini` | e.g. `claude-haiku-4-5` when provider=anthropic |
 | `STT_MODEL` / `TTS_MODEL` / `TTS_VOICE` | `deepgram/nova-3` / `cartesia/sonic-3` / — | any LiveKit Inference model string |
+| `AGENT_NAME` | `meridian-bank-agent` | explicit-dispatch name shared by worker, token endpoint, and SIP rule |
 | `BACKEND_BASE_URL` | `http://localhost:8000` | mock bank, as seen from the agent |
 | `LOG_FORMAT` | `console` | `json` in containers |
 
