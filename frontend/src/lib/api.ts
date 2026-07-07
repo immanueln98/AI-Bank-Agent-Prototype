@@ -1,7 +1,9 @@
 import type { CallMetrics, CallRecord, ScenarioInfo, TokenResponse } from './types';
 
-const BACKEND_URL: string =
-  (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? 'http://localhost:8000';
+// Default is same-origin: the Vite dev server proxies /api to the backend
+// (see vite.config.ts), which is what lets one ngrok tunnel share the whole
+// demo. Docker/static builds pass VITE_BACKEND_URL explicitly instead.
+const BACKEND_URL: string = (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? '';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${BACKEND_URL}${path}`, init);

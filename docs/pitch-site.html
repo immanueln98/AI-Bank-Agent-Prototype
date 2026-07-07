@@ -1,0 +1,1005 @@
+<title>Meridian — AI Voice Agent for Bank Call Centres</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<style>
+  /* ============ Meridian pitch site — tokens (light) ============ */
+  :root {
+    --bg: #f2f5f8;
+    --card: #ffffff;
+    --card-2: #fbfcfe;
+    --ink: #1c2733;
+    --ink-soft: #5b6b7b;
+    --ink-mute: #8595a6;
+    --line: #dde5ec;
+    --navy: #12355b;
+    --navy-deep: #0c2540;
+    --accent: #0e8a6d;
+    --accent-ink: #0b6f58;
+    --accent-soft: #e3f4ef;
+    --accent-contrast: #ffffff;
+    --amber: #b45309;
+    --amber-soft: #fef3e2;
+    --red: #b3261e;
+    --red-soft: #fdecea;
+    --hero-panel: #0c2540;
+    --hero-panel-line: #24435f;
+    --hero-panel-ink: #d7e3ee;
+    --hero-panel-mute: #7d94ab;
+    /* validated data colors (contained / to-humans) */
+    --data-contained: #0e8a6d;
+    --data-humans: #b45309;
+    --shadow: 0 1px 2px rgba(16, 35, 60, 0.06), 0 4px 14px rgba(16, 35, 60, 0.07);
+    --radius: 12px;
+    --sans: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b1826;
+      --card: #132840;
+      --card-2: #0f2032;
+      --ink: #e6edf5;
+      --ink-soft: #8fa4ba;
+      --ink-mute: #64798f;
+      --line: #26405c;
+      --navy: #a8c4e0;
+      --navy-deep: #0c2540;
+      --accent: #3ec9a0;
+      --accent-ink: #4ed6ae;
+      --accent-soft: rgba(62, 201, 160, 0.12);
+      --accent-contrast: #06231b;
+      --amber: #dfa04f;
+      --amber-soft: rgba(223, 160, 79, 0.12);
+      --red: #e57e76;
+      --red-soft: rgba(229, 126, 118, 0.12);
+      --hero-panel: #0f2032;
+      --hero-panel-line: #26405c;
+      --hero-panel-ink: #d7e3ee;
+      --hero-panel-mute: #7d94ab;
+      --data-contained: #28a37f;
+      --data-humans: #c67e30;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px rgba(0, 0, 0, 0.25);
+    }
+  }
+  :root[data-theme='dark'] {
+    --bg: #0b1826;
+    --card: #132840;
+    --card-2: #0f2032;
+    --ink: #e6edf5;
+    --ink-soft: #8fa4ba;
+    --ink-mute: #64798f;
+    --line: #26405c;
+    --navy: #a8c4e0;
+    --navy-deep: #0c2540;
+    --accent: #3ec9a0;
+    --accent-ink: #4ed6ae;
+    --accent-soft: rgba(62, 201, 160, 0.12);
+    --accent-contrast: #06231b;
+    --amber: #dfa04f;
+    --amber-soft: rgba(223, 160, 79, 0.12);
+    --red: #e57e76;
+    --red-soft: rgba(229, 126, 118, 0.12);
+    --hero-panel: #0f2032;
+    --hero-panel-line: #26405c;
+    --hero-panel-ink: #d7e3ee;
+    --hero-panel-mute: #7d94ab;
+    --data-contained: #28a37f;
+    --data-humans: #c67e30;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px rgba(0, 0, 0, 0.25);
+  }
+  :root[data-theme='light'] {
+    --bg: #f2f5f8;
+    --card: #ffffff;
+    --card-2: #fbfcfe;
+    --ink: #1c2733;
+    --ink-soft: #5b6b7b;
+    --ink-mute: #8595a6;
+    --line: #dde5ec;
+    --navy: #12355b;
+    --navy-deep: #0c2540;
+    --accent: #0e8a6d;
+    --accent-ink: #0b6f58;
+    --accent-soft: #e3f4ef;
+    --accent-contrast: #ffffff;
+    --amber: #b45309;
+    --amber-soft: #fef3e2;
+    --red: #b3261e;
+    --red-soft: #fdecea;
+    --hero-panel: #0c2540;
+    --hero-panel-line: #24435f;
+    --hero-panel-ink: #d7e3ee;
+    --hero-panel-mute: #7d94ab;
+    --data-contained: #0e8a6d;
+    --data-humans: #b45309;
+    --shadow: 0 1px 2px rgba(16, 35, 60, 0.06), 0 4px 14px rgba(16, 35, 60, 0.07);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .reveal { transition: none !important; opacity: 1 !important; transform: none !important; }
+    .feed__line { animation: none !important; opacity: 1 !important; }
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  .mono { font-family: var(--mono); }
+  a { color: var(--accent-ink); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { text-decoration-thickness: 2px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+  /* ============ nav ============ */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 20px;
+    padding: 10px 24px;
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav__brand { display: flex; align-items: center; gap: 10px; font-weight: 750; color: var(--ink); text-decoration: none; }
+  .nav__mark {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--accent); color: #fff;
+    display: grid; place-items: center; font-weight: 800; font-size: 16px;
+  }
+  .nav__links { display: flex; gap: 2px; margin-left: auto; flex-wrap: wrap; }
+  .nav__links a {
+    font-size: 13px; font-weight: 600; color: var(--ink-soft);
+    text-decoration: none; padding: 6px 10px; border-radius: 7px;
+  }
+  .nav__links a:hover { background: var(--bg); color: var(--ink); }
+  .nav__links a.is-active { background: var(--accent-soft); color: var(--accent-ink); }
+  @media (max-width: 720px) { .nav__links { display: none; } }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  /* ============ hero ============ */
+  .hero { padding: 64px 0 56px; }
+  .hero__grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center; }
+  @media (max-width: 880px) { .hero__grid { grid-template-columns: 1fr; } }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 1.6px;
+    text-transform: uppercase; color: var(--accent-ink); font-weight: 600;
+  }
+  .eyebrow::before { content: '****\00a0'; color: var(--ink-mute); }
+  .hero h1 {
+    margin: 14px 0 16px; font-size: clamp(30px, 4.6vw, 44px);
+    line-height: 1.12; letter-spacing: -0.6px; font-weight: 800; text-wrap: balance;
+    color: var(--ink);
+  }
+  .hero h1 em { font-style: normal; color: var(--accent-ink); }
+  .hero__sub { color: var(--ink-soft); max-width: 56ch; margin: 0 0 22px; font-size: 17px; }
+  .hero__chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    display: inline-block; font-size: 13px; font-weight: 650;
+    padding: 7px 14px; border-radius: 999px; text-decoration: none;
+    border: 1px solid var(--line); color: var(--ink-soft); background: var(--card);
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent-ink); }
+  .chip--solid { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .chip--solid:hover { color: #fff; filter: brightness(1.05); }
+
+  /* hero live feed panel */
+  .feed {
+    background: var(--hero-panel); border: 1px solid var(--hero-panel-line);
+    border-radius: 14px; box-shadow: var(--shadow);
+    padding: 16px 18px 18px; font-family: var(--mono); font-size: 12.5px;
+    color: var(--hero-panel-ink); min-height: 264px;
+  }
+  .feed__head {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--hero-panel-mute); font-size: 11px; letter-spacing: 1.2px;
+    text-transform: uppercase; padding-bottom: 10px; border-bottom: 1px solid var(--hero-panel-line);
+    margin-bottom: 12px;
+  }
+  .feed__dot { width: 7px; height: 7px; border-radius: 50%; background: #3ec9a0; }
+  .feed__body { display: flex; flex-direction: column; gap: 9px; }
+  .feed__line { display: flex; gap: 9px; opacity: 0; animation: feed-in 0.4s ease forwards; line-height: 1.5; }
+  .feed__icon { flex: none; }
+  .feed__line--ok .feed__icon { color: #3ec9a0; }
+  .feed__line--warn { color: #eec28e; }
+  .feed__line--bad { color: #f0a09a; }
+  .feed__line--sys { color: var(--hero-panel-mute); }
+  .feed__masked { color: #7d94ab; }
+  @keyframes feed-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .feed__caption { margin-top: 14px; color: var(--hero-panel-mute); font-size: 11px; font-family: var(--sans); }
+
+  /* ============ sections ============ */
+  section { padding: 46px 0 8px; }
+  .sec-head { max-width: 68ch; margin-bottom: 26px; }
+  .sec-head h2 {
+    margin: 10px 0 10px; font-size: clamp(22px, 3vw, 29px); letter-spacing: -0.3px;
+    font-weight: 750; line-height: 1.2; text-wrap: balance; color: var(--ink);
+  }
+  .sec-head p { margin: 0; color: var(--ink-soft); }
+
+  /* Scroll-reveal is opt-in via .js-anim on <html> so content is never hidden
+     when scripts don't run. */
+  .js-anim .reveal { opacity: 0; transform: translateY(10px); transition: opacity 0.5s ease, transform 0.5s ease; }
+  .js-anim .reveal.is-in { opacity: 1; transform: none; }
+
+  /* evidence label chips */
+  .tag {
+    display: inline-block; font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.8px; padding: 3px 8px; border-radius: 5px; text-transform: uppercase;
+    border: 1px solid var(--line); color: var(--ink-soft); background: var(--card-2);
+    white-space: nowrap;
+  }
+  .tag--primary { border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
+  .tag--corr { border-color: var(--navy); color: var(--navy); background: transparent; }
+  .tag--vendor { border-color: var(--amber); color: var(--amber); background: var(--amber-soft); }
+  .tag--reported { border-color: var(--line); color: var(--ink-soft); }
+  .tag--channel { border-style: dashed; }
+
+  /* evidence grid */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .filters button {
+    font: inherit; font-size: 13px; font-weight: 650; cursor: pointer;
+    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink-soft);
+  }
+  .filters button:hover { border-color: var(--accent); color: var(--accent-ink); }
+  .filters button.is-on { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+
+  .ev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  .ev-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 18px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .ev-card__top { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ev-card h3 { margin: 0; font-size: 16px; font-weight: 720; }
+  .ev-card__stat { font-size: 24px; font-weight: 800; color: var(--accent-ink); font-variant-numeric: tabular-nums; letter-spacing: -0.4px; }
+  .ev-card__stat small { font-size: 13px; font-weight: 600; color: var(--ink-soft); letter-spacing: 0; }
+  .ev-card p { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
+  .ev-card__src { margin-top: auto; font-size: 12.5px; }
+  .ev-card.is-hidden { display: none; }
+
+  .callout {
+    margin-top: 18px; padding: 14px 18px; border-radius: 10px;
+    background: var(--accent-soft); border: 1px solid var(--accent);
+    color: var(--ink); font-size: 14px;
+  }
+  .callout strong { color: var(--accent-ink); }
+
+  /* ============ numbers / stat tiles ============ */
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 30px; }
+  .stat {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 16px 18px; border-top: 3px solid var(--accent);
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .stat--navy { border-top-color: var(--navy); }
+  .stat--amber { border-top-color: var(--amber); }
+  .stat__value { font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; line-height: 1.15; }
+  .stat__label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.7px; font-weight: 650; color: var(--ink-soft); }
+  .stat__note { font-size: 12.5px; color: var(--ink-soft); }
+  .stat__note a { color: inherit; }
+
+  /* calculator */
+  .calc {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 22px; display: grid; gap: 22px;
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 780px) { .calc { grid-template-columns: 1fr; } }
+  .calc h3 { margin: 0 0 4px; font-size: 17px; }
+  .calc__intro { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 14px; }
+  .calc__controls { display: flex; flex-direction: column; gap: 16px; }
+  .ctl label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 650; color: var(--ink-soft); margin-bottom: 6px; }
+  .ctl output { font-family: var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; }
+  .ctl input[type='range'] { width: 100%; accent-color: var(--accent); }
+  .calc__out { display: flex; flex-direction: column; gap: 14px; justify-content: center; }
+  .calc__big { display: flex; flex-direction: column; gap: 2px; }
+  .calc__big .v { font-size: 34px; font-weight: 800; color: var(--accent-ink); font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+  .calc__big .l { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.7px; font-weight: 650; color: var(--ink-soft); }
+  .split-bar { display: flex; height: 26px; border-radius: 5px; overflow: hidden; gap: 2px; background: var(--bg); }
+  .split-bar span { display: block; height: 100%; min-width: 8px; }
+  .split-bar .seg-a { background: var(--data-contained); border-radius: 4px 0 0 4px; }
+  .split-bar .seg-b { background: var(--data-humans); border-radius: 0 4px 4px 0; }
+  .split-legend { display: flex; gap: 18px; font-size: 12.5px; color: var(--ink-soft); flex-wrap: wrap; }
+  .split-legend b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: baseline; }
+  .calc__foot { grid-column: 1 / -1; font-size: 12px; color: var(--ink-mute); margin: 0; }
+
+  /* ============ security ============ */
+  .sec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 780px) { .sec-grid { grid-template-columns: 1fr; } }
+  .g-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 16px 18px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .g-card h3 { margin: 0; font-size: 15px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .g-card p { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
+  .g-card p b { color: var(--ink); }
+
+  /* ============ regulation ============ */
+  .reg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .reg-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
+  .reg-card h3 { margin: 0 0 8px; font-size: 15px; }
+  .reg-card p { margin: 0 0 8px; font-size: 13.5px; color: var(--ink-soft); }
+  .reg-card p:last-child { margin-bottom: 0; }
+  .verbatim {
+    border-left: 3px solid var(--accent); padding: 8px 14px; margin: 10px 0 0;
+    background: var(--accent-soft); border-radius: 0 8px 8px 0;
+    font-size: 13.5px; color: var(--ink); font-style: italic;
+  }
+
+  /* ============ objections ============ */
+  .obj { border: 1px solid var(--line); border-radius: 10px; background: var(--card); box-shadow: var(--shadow); margin-bottom: 10px; overflow: hidden; }
+  .obj summary {
+    cursor: pointer; padding: 14px 18px; font-weight: 700; font-size: 14.5px;
+    display: flex; gap: 10px; align-items: center; list-style: none;
+  }
+  .obj summary::-webkit-details-marker { display: none; }
+  .obj summary::after { content: '+'; margin-left: auto; font-size: 18px; color: var(--ink-mute); font-weight: 400; }
+  .obj[open] summary::after { content: '–'; }
+  .obj summary:hover { background: var(--card-2); }
+  .obj__body { padding: 0 18px 16px; font-size: 14px; color: var(--ink-soft); }
+  .obj__body p { margin: 0 0 10px; }
+  .obj__body p:last-child { margin-bottom: 0; }
+  .obj__body .own { color: var(--ink); font-weight: 600; }
+
+  /* ============ demo map table ============ */
+  .tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); background: var(--card); }
+  table.demo { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 13.5px; }
+  table.demo th, table.demo td { text-align: left; padding: 11px 16px; border-top: 1px solid var(--line); vertical-align: top; }
+  table.demo thead th {
+    border-top: none; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.7px;
+    color: var(--ink-soft); background: var(--card-2);
+  }
+  table.demo td:first-child { font-weight: 650; white-space: nowrap; }
+  table.demo td { color: var(--ink-soft); }
+  table.demo td:first-child { color: var(--ink); }
+
+  /* ============ playbook timeline ============ */
+  .arc { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; counter-reset: step; }
+  .arc li { display: flex; gap: 16px; padding: 0 0 22px; position: relative; }
+  .arc li::before {
+    counter-increment: step; content: counter(step);
+    flex: none; width: 30px; height: 30px; border-radius: 50%;
+    background: var(--accent); color: var(--accent-contrast); font-weight: 700; font-size: 13px;
+    display: grid; place-items: center; position: relative; z-index: 1;
+  }
+  .arc li:not(:last-child)::after {
+    content: ''; position: absolute; left: 14.5px; top: 30px; bottom: 0;
+    width: 1px; background: var(--line);
+  }
+  .arc__body { padding-top: 3px; }
+  .arc__body h3 { margin: 0 0 3px; font-size: 14.5px; display: flex; gap: 10px; align-items: baseline; }
+  .arc__min { font-family: var(--mono); font-size: 11px; color: var(--ink-mute); }
+  .arc__body p { margin: 0; font-size: 13.5px; color: var(--ink-soft); max-width: 62ch; }
+
+  /* ============ sources ============ */
+  .src-group { margin-bottom: 18px; }
+  .src-group h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.7px; color: var(--ink-soft); margin: 0 0 8px; }
+  .src-group ul { margin: 0; padding: 0 0 0 2px; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .src-group li { font-size: 13.5px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+
+  footer.site {
+    margin-top: 56px; padding: 22px 0 34px; border-top: 1px solid var(--line);
+    font-size: 12.5px; color: var(--ink-soft);
+  }
+  footer.site .wrap { display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+</style>
+
+<nav class="nav" aria-label="Page">
+  <a class="nav__brand" href="#top"><span class="nav__mark">M</span>Meridian&nbsp;· AI Voice Agent</a>
+  <div class="nav__links" id="navlinks">
+    <a href="#evidence">Evidence</a>
+    <a href="#numbers">Numbers</a>
+    <a href="#security">Security</a>
+    <a href="#regulation">Regulation</a>
+    <a href="#objections">Objections</a>
+    <a href="#demo">Live demo</a>
+    <a href="#playbook">Playbook</a>
+    <a href="#sources">Sources</a>
+  </div>
+</nav>
+
+<header class="hero wrap" id="top">
+  <div class="hero__grid">
+    <div>
+      <span class="eyebrow">Proof of concept · working demo available</span>
+      <h1>An AI agent that answers the bank's phones — and <em>proves</em> every answer.</h1>
+      <p class="hero__sub">
+        Routine calls — balances, lost cards, "was this me?" — answered instantly, at any
+        concurrency, by an agent that verifies identity before it says a word, acts only
+        through the bank's own systems, and hands humans the complex calls <em>with a summary</em>.
+        Everything it does lands in a PII-masked audit trail.
+      </p>
+      <div class="hero__chips">
+        <a class="chip chip--solid" href="#evidence">See who already runs this</a>
+        <a class="chip" href="#security">Security guarantees</a>
+        <a class="chip" href="#numbers">Run the numbers</a>
+      </div>
+    </div>
+    <div class="feed" aria-label="Simulated agent activity feed">
+      <div class="feed__head"><span class="feed__dot"></span> agent activity — live audit trail</div>
+      <div class="feed__body" id="feedBody"></div>
+      <p class="feed__caption">Replaying real event traces from the demo console. Account numbers and ID digits are masked before they leave the agent — this is exactly what a supervisor sees.</p>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ================= EVIDENCE ================= -->
+  <section id="evidence">
+    <div class="sec-head reveal">
+      <span class="eyebrow">This is not experimental</span>
+      <h2>Banks are already doing this — at billions-of-interactions scale</h2>
+      <p>
+        Every claim is labelled by how it was verified: <span class="tag tag--primary">primary</span> the institution or
+        regulator itself · <span class="tag tag--corr">corroborated</span> multiple independent outlets ·
+        <span class="tag tag--vendor">vendor-reported</span> treat as directional ·
+        <span class="tag tag--reported">reported</span> single outlet.
+      </p>
+    </div>
+
+    <div class="filters reveal" role="group" aria-label="Filter deployments">
+      <button class="is-on" data-filter="all">All</button>
+      <button data-filter="voice">Voice — on the phone line</button>
+      <button data-filter="chat">Chat assistants</button>
+      <button data-filter="copilot">Agent-assist</button>
+      <button data-filter="sa">South Africa</button>
+    </div>
+
+    <div class="ev-grid">
+      <article class="ev-card reveal" data-cat="voice">
+        <div class="ev-card__top"><span class="tag tag--channel">Voice + chat</span><span class="tag tag--corr">Corroborated</span></div>
+        <h3>Wells Fargo — "Fargo"</h3>
+        <div class="ev-card__stat">245M <small>interactions in 2024 · zero PII to the LLM</small></div>
+        <p>Up from 21.3M in 2023; 336M+ cumulative. Speech is transcribed and scrubbed <em>before</em>
+          the model — no personally identifiable information ever reaches the LLM. The same privacy
+          architecture our POC implements.</p>
+        <span class="ev-card__src"><a href="https://venturebeat.com/ai/wells-fargos-ai-assistant-just-crossed-245-million-interactions-with-zero-humans-in-the-loop-and-zero-pii-to-the-llm" rel="noopener">VentureBeat</a></span>
+      </article>
+
+      <article class="ev-card reveal" data-cat="chat">
+        <div class="ev-card__top"><span class="tag tag--channel">Chat-first</span><span class="tag tag--primary">Primary</span></div>
+        <h3>Bank of America — "Erica"</h3>
+        <div class="ev-card__stat">3B+ <small>client interactions · ~50M users · 58M/month</small></div>
+        <p>Crossed 3&nbsp;billion interactions in Aug 2025 — the first billion took 4 years, the pace is
+          now ~58M a month. BofA also reports a 50% drop in IT service-desk calls from the employee
+          variant. CashPro Chat reaches 43% containment (<span class="tag tag--reported">reported</span>, American Banker).</p>
+        <span class="ev-card__src"><a href="https://newsroom.bankofamerica.com/content/newsroom/press-releases/2025/08/a-decade-of-ai-innovation--bofa-s-virtual-assistant-erica-surpas.html" rel="noopener">BofA newsroom</a> · <a href="https://www.americanbanker.com/news/how-bank-of-americas-erica-does-the-work-of-11000-people" rel="noopener">American Banker</a></span>
+      </article>
+
+      <article class="ev-card reveal" data-cat="voice">
+        <div class="ev-card__top"><span class="tag tag--channel">Voice — phone line</span><span class="tag tag--vendor">Vendor-reported</span></div>
+        <h3>UK &amp; EU banks — PolyAI voice agents</h3>
+        <div class="ev-card__stat">30% <small>of calls fully resolved in the voice channel</small></div>
+        <p>A savings bank resolves 30% of inbound calls end-to-end with a customer-led voice assistant;
+          at Atos contact centres the assistant carries the workload of 50–95 FTE at roughly half the
+          cost. The closest published match to what we're proposing.</p>
+        <span class="ev-card__src"><a href="https://poly.ai/case-studies/savings-bank/" rel="noopener">PolyAI case study</a> · <a href="https://poly.ai/customers/atos" rel="noopener">Atos</a></span>
+      </article>
+
+      <article class="ev-card reveal" data-cat="chat">
+        <div class="ev-card__top"><span class="tag tag--channel">Chat-first</span><span class="tag tag--primary">Primary</span></div>
+        <h3>NatWest — "Cora" &amp; gen-AI "Cora+"</h3>
+        <div class="ev-card__stat">11M <small>queries in 2023 · +150% satisfaction in Cora+ pilot</small></div>
+        <p>Doubled from 5M queries in 2019. The gen-AI upgrade (IBM watsonx, retrieval-augmented) lifted
+          satisfaction up to 150% on some question types — and hands human agents a conversation
+          summary on transfer, exactly like our escalation flow.</p>
+        <span class="ev-card__src"><a href="https://www.natwestgroup.com/news-and-insights/news-room/press-releases/data-and-technology/2024/jun/natwest-launches-cora-plus-the-latest-generative-ai-upgrade-to-t.html" rel="noopener">NatWest Group</a></span>
+      </article>
+
+      <article class="ev-card reveal" data-cat="copilot">
+        <div class="ev-card__top"><span class="tag tag--channel">Agent-assist</span><span class="tag tag--primary">Primary</span></div>
+        <h3>DBS (Singapore) — "CSO Assistant"</h3>
+        <div class="ev-card__stat">−20% <small>expected call-handle time · 500 agents assisted</small></div>
+        <p>Gen-AI copilot for the customer-service workforce handling 250k+ customer queries a month;
+          ~90% of pilot agents reported positive impact. Proof the same technology also lifts the
+          humans who keep the complex calls.</p>
+        <span class="ev-card__src"><a href="https://www.dbs.com/newsroom/DBS_empowers_its_Customer_Service_Officers_with_Gen_AI_powered_virtual_assistant_to_reduce_toil_and_enhance_customer_experience" rel="noopener">DBS newsroom</a></span>
+      </article>
+
+      <article class="ev-card reveal" data-cat="sa">
+        <div class="ev-card__top"><span class="tag tag--channel">SA market context</span><span class="tag tag--primary">Primary — regulator</span></div>
+        <h3>South Africa — SARB PA &amp; FSCA joint report</h3>
+        <div class="ev-card__stat">52% <small>of SA banks already adopt AI — the sector's leaders</small></div>
+        <p>The regulators' Nov 2025 survey (~2,100 firms) found banking leads AI adoption in the SA
+          financial sector, with chatbot-style customer engagement among the top use cases. The bank
+          you're pitching almost certainly runs conversational AI in text already — and knows its limits.</p>
+        <span class="ev-card__src"><a href="https://www.resbank.co.za/content/dam/sarb/publications/prudential-authority/pa-public-awareness/covid-19-response/2025/artificial-intelligence-in-the-south-african-financial-sector/Artificial%20Intelligence%20in%20the%20South%20African%20Financial%20Sector.pdf" rel="noopener">SARB/FSCA report (PDF)</a></span>
+      </article>
+    </div>
+
+    <p class="callout reveal">
+      <strong>How to read this honestly:</strong> Erica and Cora prove <em>appetite and scale</em> in retail
+      banking; Fargo proves <em>voice plus privacy architecture</em> at massive volume; the PolyAI deployments
+      prove <em>containment on the actual phone line</em>; DBS proves the <em>human-assist</em> variant. Our
+      proposal is the PolyAI-shaped deployment with the Wells-Fargo-shaped privacy posture.
+    </p>
+  </section>
+
+  <!-- ================= NUMBERS ================= -->
+  <section id="numbers">
+    <div class="sec-head reveal">
+      <span class="eyebrow">The COO / CFO slide</span>
+      <h2>The numbers that move the decision</h2>
+      <p>Containment is the KPI: the share of calls resolved with no human minutes spent. Everything else follows from it.</p>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat reveal">
+        <span class="stat__value" data-count="13.50" data-prefix="$" data-decimals="2">$13.50</span>
+        <span class="stat__label">median cost per assisted contact</span>
+        <span class="stat__note">vs <b>$1.84</b> self-service — <a href="https://www.gartner.com/en/documents/5164231" rel="noopener">Gartner benchmark</a></span>
+      </div>
+      <div class="stat reveal">
+        <span class="stat__value" data-count="30" data-suffix="%+">30%+</span>
+        <span class="stat__label">voice containment at launch, in banking</span>
+        <span class="stat__note">PolyAI savings-bank deployment (vendor-reported); 50%+ claimed at maturity</span>
+      </div>
+      <div class="stat stat--amber reveal">
+        <span class="stat__value" data-count="14" data-suffix="%">14%</span>
+        <span class="stat__label">of issues fully resolved by static self-service</span>
+        <span class="stat__note">Gartner 2024 — why FAQs and IVR menus didn't fix this, and a conversational agent can</span>
+      </div>
+      <div class="stat stat--navy reveal">
+        <span class="stat__value">∞</span>
+        <span class="stat__label">concurrency — no queue at payday peaks</span>
+        <span class="stat__note">overflow spikes stop producing 40-minute hold times; humans get the complex calls</span>
+      </div>
+    </div>
+
+    <div class="calc reveal" id="calc">
+      <div>
+        <h3>What containment is worth to you</h3>
+        <p class="calc__intro">Drag the assumptions — the arithmetic updates. Bring the bank's own numbers to the meeting and fill these in live.</p>
+        <div class="calc__controls">
+          <div class="ctl">
+            <label for="cCalls">Calls per day <output id="oCalls">2,000</output></label>
+            <input type="range" id="cCalls" min="250" max="20000" step="250" value="2000" />
+          </div>
+          <div class="ctl">
+            <label for="cCont">Containment rate <output id="oCont">30%</output></label>
+            <input type="range" id="cCont" min="10" max="60" step="1" value="30" />
+          </div>
+          <div class="ctl">
+            <label for="cCost">Cost per human-handled call <output id="oCost">R60</output></label>
+            <input type="range" id="cCost" min="20" max="150" step="5" value="60" />
+          </div>
+          <div class="ctl">
+            <label for="cAht">Minutes per contained call <output id="oAht">4 min</output></label>
+            <input type="range" id="cAht" min="2" max="8" step="1" value="4" />
+          </div>
+        </div>
+      </div>
+      <div class="calc__out" aria-live="polite">
+        <div class="calc__big"><span class="v" id="rSave">—</span><span class="l">gross saving / month</span></div>
+        <div class="calc__big"><span class="v" id="rHours">—</span><span class="l">consultant-hours returned / month</span></div>
+        <div>
+          <div class="split-bar" role="img" aria-label="Share of calls contained by AI versus handled by humans" id="splitBar">
+            <span class="seg-a" id="segA" style="width: 30%"></span>
+            <span class="seg-b" id="segB" style="width: 70%"></span>
+          </div>
+          <div class="split-legend" style="margin-top: 8px">
+            <span><span class="swatch" style="background: var(--data-contained)"></span>Contained by AI — <b id="lgA">600</b>/day</span>
+            <span><span class="swatch" style="background: var(--data-humans)"></span>To consultants — <b id="lgB">1,400</b>/day</span>
+          </div>
+        </div>
+      </div>
+      <p class="calc__foot">Illustrative arithmetic, not a quote: assumes ~R8 marginal cost per AI-handled call
+        (inference + telephony, order-of-magnitude) already netted out of the saving; 30-day months. Gartner's US
+        median for an assisted contact is $13.50 — the R60 default is deliberately conservative.</p>
+    </div>
+  </section>
+
+  <!-- ================= SECURITY ================= -->
+  <section id="security">
+    <div class="sec-head reveal">
+      <span class="eyebrow">The section the risk team reads first</span>
+      <h2>Security by construction, not by prompt</h2>
+      <p>
+        Every guarantee is graded: <b>structural</b> (the capability does not exist) beats
+        <b>process</b> (it's checked and logged) beats <b>contractual</b> (it's in the DPA). "Please
+        don't" is not on the list — and each guarantee below is demonstrable in the live demo today.
+      </p>
+    </div>
+
+    <div class="sec-grid">
+      <div class="g-card reveal">
+        <h3><span class="tag tag--primary">Structural</span> Identity before information</h3>
+        <p>Before verification the agent <b>has no account tools at all</b> — a prompt injection cannot
+          call a tool that doesn't exist. Three failed attempts triggers a <b>security lockout</b> event
+          and the only remaining path is a human. In production, verification plugs into the bank's own
+          OTP / app-push flows, with step-up auth for sensitive actions.</p>
+      </div>
+      <div class="g-card reveal">
+        <h3><span class="tag tag--primary">Structural</span> No money movement — no such tool</h3>
+        <p>There is no transfer or payment tool on any agent. Capability expansion is a governance
+          decision the bank takes per-tool with step-up authentication — never a model behaviour.</p>
+      </div>
+      <div class="g-card reveal">
+        <h3><span class="tag tag--primary">Structural</span> PII never leaves unmasked</h3>
+        <p>Known values (the account number a caller just said) are masked exactly; regex nets catch
+          SA-ID/Omang/account shapes in logs, transcripts, and the live event stream.
+          <b>Precedent at scale: Wells Fargo runs 245M interactions/year with zero PII sent to the
+          LLM</b> — the same pattern.</p>
+      </div>
+      <div class="g-card reveal">
+        <h3><span class="tag tag--primary">Structural</span> Grounded answers only</h3>
+        <p>The agent may only state account facts returned by the bank's API in that call. Every tool
+          call is visible live and retained. This is the direct engineering answer to
+          <i>Moffatt v Air Canada</i> — see objections below.</p>
+      </div>
+      <div class="g-card reveal">
+        <h3><span class="tag">Process</span> A complete audit trail, per call</h3>
+        <p>Each session leaves a masked transcript and a structured record: outcome, verification
+          attempts, every tool call with masked arguments, escalation reference. The supervisor
+          dashboard reads the same artefact QA and POPIA data-subject requests would.</p>
+      </div>
+      <div class="g-card reveal">
+        <h3><span class="tag">Process</span> Human escalation is a feature</h3>
+        <p>An explicit escalation tool files a ticket and hands the consultant a summary — nobody
+          repeats themselves. The EU AI Act's Article 50 duty (disclose it's an AI) is satisfied by a
+          <b>deterministic</b> opening line — fixed text, not LLM-generated.</p>
+      </div>
+      <div class="g-card reveal">
+        <h3><span class="tag">Contractual</span> Residency &amp; training exclusions</h3>
+        <p>Production options include self-hosted media + VPC or in-country model inference for strict
+          POPIA cross-border postures. Enterprise LLM terms exclude customer data from training — the
+          DPA goes on the table in meeting one.</p>
+      </div>
+      <div class="g-card reveal">
+        <h3><span class="tag">Standard</span> PCI DSS posture for card data</h3>
+        <p>Card numbers and CVV must never enter recordings or transcripts. PCI SSC telephone-payment
+          guidance endorses DTMF capture ("type it on your keypad") — supported by the telephony layer,
+          so payment data bypasses the transcript entirely.</p>
+      </div>
+      <div class="g-card reveal" style="grid-column: 1 / -1">
+        <h3><span class="tag tag--primary">Deliberate omission</span> We do <u>not</u> authenticate by voice</h3>
+        <p>AI voice cloning defeated a major UK bank's voice-ID in a 2023 journalist demonstration, and
+          the SARB/FSCA flag deepfake audio as a live consumer-protection risk. We treat the voice
+          channel as <b>untrusted input</b> and verify with knowledge/possession factors instead.
+          Saying this out loud earns credibility: the design assumes the adversary has AI too — and the
+          agent <i>never</i> skips the check, however good the sob story.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= REGULATION ================= -->
+  <section id="regulation">
+    <div class="sec-head reveal">
+      <span class="eyebrow">South Africa first</span>
+      <h2>The regulatory position, in three cards</h2>
+      <p>Nothing here blocks a deployment today — but each card is a talking point the bank's compliance team will raise.</p>
+    </div>
+    <div class="reg-grid">
+      <div class="reg-card reveal">
+        <h3>No AI-specific law blocks this</h3>
+        <p>SA regulates AI in finance through existing technology-neutral frameworks (FAIS, POPIA,
+          prudential standards). The SARB PA + FSCA joint report (24 Nov 2025) is guidance; a
+          discussion paper is the stated next step. National policy direction: strengthen existing
+          sectoral laws — no standalone AI Act.</p>
+      </div>
+      <div class="reg-card reveal">
+        <h3>POPIA is the operative law</h3>
+        <p>It governs personal-data processing, automated decision-making, profiling, and cross-border
+          transfers. Section 71 restricts significant decisions made <em>solely</em> by automation.</p>
+        <p class="verbatim">"The agent executes service requests — check a balance, block a card, open a
+          dispute — and makes no credit or adverse decisions; anything judgement-shaped goes to a
+          human." <span style="font-style: normal">← say this sentence verbatim.</span></p>
+      </div>
+      <div class="reg-card reveal">
+        <h3>Governance expectations → our artefacts</h3>
+        <p>The regulators expect board oversight, model risk management, explainability, and disclosure.
+          Map each to an artefact we already produce: the audit trail, the eval suite, the deterministic
+          disclosure line, the DPIA-ready data flows. If the bank has EU exposure: customer-service AI is
+          limited-risk; Article 50 disclosure is built in.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= OBJECTIONS ================= -->
+  <section id="objections">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Raise them before they do</span>
+      <h2>The four objections — and the answers that hold</h2>
+    </div>
+
+    <details class="obj reveal">
+      <summary>"What if it makes something up?" — the Air Canada precedent</summary>
+      <div class="obj__body">
+        <p>In <i>Moffatt v Air Canada</i> (2024), a tribunal held the airline liable for a bereavement-fare
+          policy its chatbot invented. "The AI said it, not us" failed as a defence.</p>
+        <p class="own">Own it: the bank is liable for what the agent says — which is exactly why answers are
+          grounded in system calls, policy questions come from the bank's approved FAQ corpus, and
+          everything else escalates.</p>
+        <p>Then show the activity panel proving where each answer came from. The objection becomes the demo.</p>
+      </div>
+    </details>
+
+    <details class="obj reveal">
+      <summary>"So we can cut the call centre?" — the CBA cautionary tale</summary>
+      <div class="obj__body">
+        <p>Commonwealth Bank of Australia declared 45 call-centre roles redundant in 2025 citing its voice
+          bot; call volumes rose instead, and CBA publicly reversed and apologised.</p>
+        <p class="own">Position it as overflow absorption, not replacement: the agent takes growth and
+          spikes so consultants keep the complex, revenue-relevant conversations. Headcount decisions
+          come after the containment data, not before it.</p>
+        <p>This framing also defuses union and works-council friction before it starts.</p>
+      </div>
+    </details>
+
+    <details class="obj reveal">
+      <summary>"Can someone deepfake their way in?"</summary>
+      <div class="obj__body">
+        <p>Not through the agent. Voice is treated as untrusted input; verification is
+          knowledge/possession-based today and plugs into the bank's OTP or app-push in production.</p>
+        <p class="own">The AI answering the phone doesn't weaken caller authentication — it standardises
+          it: the agent never skips the check, and every attempt (and lockout) is logged as a security
+          event.</p>
+      </div>
+    </details>
+
+    <details class="obj reveal">
+      <summary>"Does our data train someone's model?"</summary>
+      <div class="obj__body">
+        <p>No — enterprise API terms plus a data processing agreement exclude customer data from
+          training; in-country or VPC inference is available for strict residency postures.</p>
+        <p class="own">This is a contracts conversation, not a research problem.</p>
+      </div>
+    </details>
+
+    <details class="obj reveal">
+      <summary>"What about isiZulu, Afrikaans, Setswana?"</summary>
+      <div class="obj__body">
+        <p>Multilingual speech models make languages a configuration surface, but accuracy per
+          language and accent must be proven, not assumed.</p>
+        <p class="own">We position language rollout as evaluation-gated: each language ships when it
+          passes the same behavioural test suite English passes today. Banks respect a measured answer
+          more than a checkbox.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ================= DEMO MAP ================= -->
+  <section id="demo">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Show, don't tell</span>
+      <h2>Every concern has a demo beat</h2>
+      <p>The working prototype answers each buyer concern live — this table is the demo script.</p>
+    </div>
+    <div class="tbl-wrap reveal">
+      <table class="demo">
+        <thead><tr><th>Buyer concern</th><th>What they watch happen</th></tr></thead>
+        <tbody>
+          <tr><td>"Will it leak account data?"</td><td>Ask for a balance before verifying → refusal; the activity panel shows zero account calls. Fail verification 3× → red <b>security lockout</b>, human-only path.</td></tr>
+          <tr><td>"Real answers or hallucinations?"</td><td>Every answer's tool call streams into the activity panel with masked arguments and results — grounding is visible, not claimed.</td></tr>
+          <tr><td>"What does my supervisor see?"</td><td>The Supervisor view: containment %, average handle time, escalations, lockouts — and a per-call drill-down into the masked audit trail.</td></tr>
+          <tr><td>"What when it can't help?"</td><td>Escalation files a ticket with a handover summary; amber banner; the call is recorded as escalated, not contained.</td></tr>
+          <tr><td>"What when your backend is down?"</td><td>Kill the mock bank mid-call → the agent apologises and offers a human. Timeouts, retries, and fallback lines are built in.</td></tr>
+          <tr><td>"Is the caller told it's an AI?"</td><td>A deterministic opening disclosure on every call — fixed text, zero LLM latency, EU AI Act Article 50 satisfied.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= PLAYBOOK ================= -->
+  <section id="playbook">
+    <div class="sec-head reveal">
+      <span class="eyebrow">The 10-minute meeting</span>
+      <h2>Pitch playbook</h2>
+    </div>
+    <ol class="arc reveal">
+      <li><div class="arc__body"><h3>The queue problem <span class="arc__min">1 min</span></h3><p>Open with their numbers: call volumes, hold times, cost per call. If you don't have them, ask — the answers become the calculator inputs.</p></div></li>
+      <li><div class="arc__body"><h3>Live call, happy path <span class="arc__min">2 min</span></h3><p>Thabo: verify → balance → "has my salary come in?" — with the activity panel visible the whole time.</p></div></li>
+      <li><div class="arc__body"><h3>The refusals <span class="arc__min">2 min</span></h3><p>Balance before verifying; a transfer request; three failed verifications → lockout. This is the security pitch, shown not told.</p></div></li>
+      <li><div class="arc__body"><h3>Escalation <span class="arc__min">1 min</span></h3><p>Sipho: investment-advice refusal → human handoff with a summary the consultant reads back.</p></div></li>
+      <li><div class="arc__body"><h3>Supervisor view <span class="arc__min">2 min</span></h3><p>"Here's the dashboard your ops team gets" — containment, handle time, and the audit trail of the call you just made together.</p></div></li>
+      <li><div class="arc__body"><h3>Evidence &amp; guarantees <span class="arc__min">1 min</span></h3><p>The deployments table and the security one-pager — leave this site with them.</p></div></li>
+      <li><div class="arc__body"><h3>The ask <span class="arc__min">1 min</span></h3><p>A scoped pilot on one call type (card blocks is ideal: high volume, low judgement) with containment/CSAT success criteria read off the same dashboard.</p></div></li>
+    </ol>
+  </section>
+
+  <!-- ================= SOURCES ================= -->
+  <section id="sources">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Appendix</span>
+      <h2>Sources &amp; verification status</h2>
+      <p>Spot-checked July 2026. Keep the label with the claim when you reuse it.</p>
+    </div>
+
+    <div class="src-group reveal">
+      <h3>Verified against primary source</h3>
+      <ul>
+        <li><span class="tag tag--primary">Primary</span><a href="https://newsroom.bankofamerica.com/content/newsroom/press-releases/2025/08/a-decade-of-ai-innovation--bofa-s-virtual-assistant-erica-surpas.html" rel="noopener">BofA newsroom — Erica surpasses 3B interactions (Aug 2025)</a></li>
+        <li><span class="tag tag--primary">Primary</span><a href="https://www.natwestgroup.com/news-and-insights/news-room/press-releases/data-and-technology/2024/jun/natwest-launches-cora-plus-the-latest-generative-ai-upgrade-to-t.html" rel="noopener">NatWest Group — Cora+ launch</a></li>
+        <li><span class="tag tag--primary">Primary</span><a href="https://www.dbs.com/newsroom/DBS_empowers_its_Customer_Service_Officers_with_Gen_AI_powered_virtual_assistant_to_reduce_toil_and_enhance_customer_experience" rel="noopener">DBS newsroom — CSO Assistant</a></li>
+        <li><span class="tag tag--primary">Primary</span><a href="https://www.resbank.co.za/content/dam/sarb/publications/prudential-authority/pa-public-awareness/covid-19-response/2025/artificial-intelligence-in-the-south-african-financial-sector/Artificial%20Intelligence%20in%20the%20South%20African%20Financial%20Sector.pdf" rel="noopener">SARB PA &amp; FSCA — AI in the South African Financial Sector (Nov 2025, PDF)</a></li>
+        <li><span class="tag tag--primary">Primary</span><a href="https://listings.pcisecuritystandards.org/documents/protecting_telephone-based_payment_card_data.pdf" rel="noopener">PCI SSC — Protecting telephone-based payment card data (PDF)</a></li>
+        <li><span class="tag tag--primary">Primary</span><a href="https://www.gartner.com/en/documents/5164231" rel="noopener">Gartner — customer service cost benchmarks ($13.50 vs $1.84)</a></li>
+      </ul>
+    </div>
+
+    <div class="src-group reveal">
+      <h3>Corroborated by multiple independent outlets</h3>
+      <ul>
+        <li><span class="tag tag--corr">Corroborated</span><a href="https://venturebeat.com/ai/wells-fargos-ai-assistant-just-crossed-245-million-interactions-with-zero-humans-in-the-loop-and-zero-pii-to-the-llm" rel="noopener">VentureBeat — Wells Fargo Fargo: 245M interactions, zero PII to the LLM</a></li>
+        <li><span class="tag tag--corr">Corroborated</span><a href="https://www.biometricupdate.com/202302/journalist-uses-ai-voice-to-break-into-own-bank-account" rel="noopener">Biometric Update — AI voice clone defeats bank voice-ID (Vice reporting)</a></li>
+        <li><span class="tag tag--corr">Corroborated</span><a href="https://ia.acs.org.au/article/2025/cba-reverses-ai-driven-job-cuts--admits--error-.html" rel="noopener">ACS Information Age — CBA reverses AI-driven job cuts</a></li>
+        <li><span class="tag tag--corr">Corroborated</span><a href="https://researchictafrica.net/2024/02/28/misleading-chatbots-corporate-responsibility-and-the-myth-of-unregulated-ai/" rel="noopener">Research ICT Africa — Moffatt v Air Canada analysis</a></li>
+        <li><span class="tag tag--corr">Corroborated</span><a href="https://www.aoshearman.com/en/insights/ao-shearman-on-tech/zooming-in-on-ai-11-eu-ai-act-what-are-the-obligations-for-the-limited-risk-ai-systems" rel="noopener">A&amp;O Shearman — EU AI Act Article 50 obligations</a></li>
+        <li><span class="tag tag--corr">Corroborated</span><a href="https://www.michalsons.com/focus-areas/artificial-intelligence-law/south-african-ai-policy-guidance-and-overview" rel="noopener">Michalsons — South African AI policy overview</a></li>
+        <li><span class="tag tag--corr">Corroborated</span><a href="https://www.ensafrica.com/news/detail/11119/fsca-and-prudential-authority-publish-landmar" rel="noopener">ENSafrica — FSCA/PA joint report summary</a></li>
+      </ul>
+    </div>
+
+    <div class="src-group reveal">
+      <h3>Vendor-reported or single-outlet — attribute in-slide</h3>
+      <ul>
+        <li><span class="tag tag--vendor">Vendor</span><a href="https://poly.ai/case-studies/savings-bank/" rel="noopener">PolyAI — savings bank 30% containment</a></li>
+        <li><span class="tag tag--vendor">Vendor</span><a href="https://poly.ai/customers/atos" rel="noopener">PolyAI — Atos 50–95 FTE equivalent</a></li>
+        <li><span class="tag tag--reported">Reported</span><a href="https://www.americanbanker.com/news/how-bank-of-americas-erica-does-the-work-of-11000-people" rel="noopener">American Banker — Erica deflection figures, "work of 11,000"</a></li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>Meridian Bank AI Voice Agent — proof of concept, fixture data only. Ask for a live demo link.</span>
+    <span class="mono">evidence labels: primary · corroborated · vendor-reported · reported</span>
+  </div>
+</footer>
+
+<script>
+  // ---------- hero: replay real call traces ----------
+  const TRACES = [
+    [
+      ['sys', '☎', 'incoming call · room demo-thabo-4f2a91'],
+      ['ok', '✓', 'verify_identity  account=<span class="feed__masked">****5678</span> id=<span class="feed__masked">****</span> → Identity verified: Thabo'],
+      ['ok', '⚙', 'get_customer_profile → 2 accounts, card active · 412 ms'],
+      ['ok', '⚙', 'get_recent_transactions limit=10 → 10 returned · 388 ms'],
+      ['ok', '✓', 'outcome: CONTAINED — 2m 41s, zero human minutes'],
+    ],
+    [
+      ['sys', '☎', 'incoming call · room demo-naledi-8c17d3'],
+      ['ok', '✓', 'verify_identity → Identity verified: Naledi (<span class="feed__masked">****1234</span>)'],
+      ['ok', '⚙', 'get_recent_transactions → 9 returned, 1 flagged'],
+      ['ok', '⚙', 'dispute_transaction txn=txn-002-010 → DSP-0142 under review, 10-day SLA'],
+      ['ok', '✓', 'outcome: CONTAINED — dispute filed on the call'],
+    ],
+    [
+      ['sys', '☎', 'incoming call · room demo-unknown-c09b55'],
+      ['warn', '⚠', 'verify_identity → no match (attempt 1) · details withheld'],
+      ['warn', '⚠', 'verify_identity → no match (attempt 2)'],
+      ['bad', '🔒', 'SECURITY LOCKOUT — 3 failed attempts · account help disabled'],
+      ['warn', '⤴', 'escalate_to_human → ticket ESC-0113 · summary handed to consultant'],
+    ],
+  ];
+  const feedBody = document.getElementById('feedBody');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let traceIdx = 0;
+  function playTrace() {
+    const trace = TRACES[traceIdx % TRACES.length];
+    traceIdx += 1;
+    feedBody.innerHTML = '';
+    trace.forEach(([kind, icon, html], lineIdx) => {
+      const line = document.createElement('div');
+      line.className = `feed__line feed__line--${kind}`;
+      line.style.animationDelay = reduced ? '0s' : `${lineIdx * 0.9}s`;
+      line.innerHTML = `<span class="feed__icon">${icon}</span><span>${html}</span>`;
+      feedBody.appendChild(line);
+    });
+  }
+  playTrace();
+  if (!reduced) setInterval(playTrace, 7500);
+
+  // ---------- scroll reveal (JS-gated so no-JS still shows everything) ----------
+  if (!reduced) {
+    document.documentElement.classList.add('js-anim');
+    const revealEls = [...document.querySelectorAll('.reveal')];
+    // Anything already in view shows immediately - no waiting on observer timing
+    // (fragment navigation, restored scroll positions).
+    const showInView = () => {
+      const vh = window.innerHeight;
+      revealEls.forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.top < vh && r.bottom > 0) el.classList.add('is-in');
+      });
+    };
+    showInView();
+    window.addEventListener('hashchange', showInView);
+    const revealer = new IntersectionObserver(
+      (entries) => entries.forEach((entry) => entry.isIntersecting && entry.target.classList.add('is-in')),
+      { threshold: 0.08 },
+    );
+    revealEls.forEach((el) => revealer.observe(el));
+    // Safety net: nothing stays invisible for long, whatever the browser does.
+    setTimeout(() => revealEls.forEach((el) => el.classList.add('is-in')), 2500);
+  }
+
+  // ---------- nav scrollspy ----------
+  const navLinks = [...document.querySelectorAll('#navlinks a')];
+  const spy = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        navLinks.forEach((link) =>
+          link.classList.toggle('is-active', link.getAttribute('href') === `#${entry.target.id}`),
+        );
+      });
+    },
+    { rootMargin: '-30% 0px -60% 0px' },
+  );
+  document.querySelectorAll('main section').forEach((section) => spy.observe(section));
+
+  // ---------- evidence filter ----------
+  const filterBtns = document.querySelectorAll('.filters button');
+  filterBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach((b) => b.classList.toggle('is-on', b === btn));
+      const want = btn.dataset.filter;
+      document.querySelectorAll('.ev-card').forEach((card) => {
+        card.classList.toggle('is-hidden', want !== 'all' && card.dataset.cat !== want);
+      });
+    });
+  });
+
+  // ---------- stat count-up ----------
+  // en-US here: the benchmark stats are dollar figures ("$13.50", not "$13,50").
+  const fmt = (n, dec) => n.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  const counter = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      counter.unobserve(entry.target);
+      const el = entry.target;
+      const target = parseFloat(el.dataset.count);
+      const dec = parseInt(el.dataset.decimals || '0', 10);
+      const prefix = el.dataset.prefix || '';
+      const suffix = el.dataset.suffix || '';
+      if (reduced) { el.textContent = prefix + fmt(target, dec) + suffix; return; }
+      const t0 = performance.now();
+      const dur = 900;
+      const tick = (t) => {
+        const p = Math.min(1, (t - t0) / dur);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = prefix + fmt(target * eased, dec) + suffix;
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('[data-count]').forEach((el) => counter.observe(el));
+
+  // ---------- ROI calculator ----------
+  const AI_COST = 8; // R per AI-handled call, stated in the footnote
+  const $ = (id) => document.getElementById(id);
+  const inputs = ['cCalls', 'cCont', 'cCost', 'cAht'].map($);
+  function recalc() {
+    const calls = +$('cCalls').value;
+    const cont = +$('cCont').value / 100;
+    const cost = +$('cCost').value;
+    const aht = +$('cAht').value;
+    $('oCalls').textContent = calls.toLocaleString('en-ZA');
+    $('oCont').textContent = Math.round(cont * 100) + '%';
+    $('oCost').textContent = 'R' + cost;
+    $('oAht').textContent = aht + ' min';
+    const containedPerDay = Math.round(calls * cont);
+    const savingMonth = containedPerDay * Math.max(0, cost - AI_COST) * 30;
+    const hoursMonth = (containedPerDay * aht * 30) / 60;
+    $('rSave').textContent = 'R' + Math.round(savingMonth).toLocaleString('en-ZA');
+    $('rHours').textContent = Math.round(hoursMonth).toLocaleString('en-ZA') + ' h';
+    $('segA').style.width = Math.max(4, cont * 100) + '%';
+    $('segB').style.width = Math.max(4, (1 - cont) * 100) + '%';
+    $('lgA').textContent = containedPerDay.toLocaleString('en-ZA');
+    $('lgB').textContent = (calls - containedPerDay).toLocaleString('en-ZA');
+    $('splitBar').setAttribute(
+      'aria-label',
+      `${Math.round(cont * 100)}% of calls contained by AI, ${Math.round((1 - cont) * 100)}% handled by humans`,
+    );
+  }
+  inputs.forEach((el) => el.addEventListener('input', recalc));
+  recalc();
+</script>
