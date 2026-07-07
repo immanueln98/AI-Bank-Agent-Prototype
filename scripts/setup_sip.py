@@ -15,6 +15,15 @@ The "call-" room prefix is the channel contract: the agent tags these calls
 channel=sip on their call records, and hide_phone_number keeps the caller's
 number out of room names (and therefore out of transcripts and dashboards),
 matching the project's PII posture.
+
+Free test without buying a number: register any made-up E.164 number with
+--auth, then dial it from a softphone (Linphone/Zoiper) as a direct SIP call:
+
+    uv run python scripts/setup_sip.py --numbers +15550100 --auth demo:s3cret
+    # softphone: call sip:+15550100@<your-project>.sip.livekit.cloud
+    #            (username demo / password s3cret when challenged)
+
+Same trunk, same dispatch, same agent - just no PSTN leg in front of it.
 """
 
 import argparse
@@ -44,7 +53,7 @@ RULE_NAME = "meridian-bank-dispatch"
 E164 = re.compile(r"\+[1-9]\d{6,14}")
 
 
-async def setup(numbers: list[str]) -> None:
+async def setup(numbers: list[str], auth: tuple[str, str] | None) -> None:
     settings = AgentSettings()
     if not (settings.livekit_url and settings.livekit_api_key and settings.livekit_api_secret):
         raise SystemExit("LIVEKIT_URL / LIVEKIT_API_KEY / LIVEKIT_API_SECRET missing - fill .env")
@@ -73,6 +82,10 @@ async def setup(numbers: list[str]) -> None:
                     name=TRUNK_NAME,
                     numbers=numbers,  # only calls dialed TO these numbers are accepted
                     krisp_enabled=True,  # background-noise cancellation for phone audio
+                    # Digest auth challenge for callers. Twilio elastic trunks
+                    # can't answer it (leave --auth off there); softphones can.
+                    auth_username=auth[0] if auth else "",
+                    auth_password=auth[1] if auth else "",
                 )
             )
         )
@@ -108,11 +121,23 @@ def main() -> None:
         metavar="+27XXXXXXXXX",
         help="E.164 phone number(s) assigned to your SIP trunk provider",
     )
+    parser.add_argument(
+        "--auth",
+        metavar="USER:PASS",
+        help="require SIP digest auth on the trunk (softphone testing; "
+        "omit for Twilio elastic trunks, which cannot answer challenges)",
+    )
     args = parser.parse_args()
     bad = [n for n in args.numbers if not E164.fullmatch(n)]
     if bad:
         raise SystemExit(f"not E.164 (+<country><number>): {bad}")
-    asyncio.run(setup(args.numbers))
+    auth: tuple[str, str] | None = None
+    if args.auth:
+        user, sep, password = args.auth.partition(":")
+        if not (user and sep and password):
+            raise SystemExit("--auth must be USER:PASS")
+        auth = (user, password)
+    asyncio.run(setup(args.numbers, auth))
 
 
 if __name__ == "__main__":

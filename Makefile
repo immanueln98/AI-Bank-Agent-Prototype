@@ -36,8 +36,8 @@ run-frontend:
 console: ## Talk to the agent in the terminal (no browser/frontend needed)
 	uv run python -m bankagent_agent.main console
 
-setup-sip: ## Create LiveKit inbound trunk + dispatch rule (NUMBERS="+27..." required)
-	uv run python scripts/setup_sip.py --numbers $(NUMBERS)
+setup-sip: ## Create LiveKit inbound trunk + dispatch rule (NUMBERS="+27..." [AUTH=user:pass])
+	uv run python scripts/setup_sip.py --numbers $(NUMBERS) $(if $(AUTH),--auth $(AUTH))
 
 # ---------------------------------------------------------------------------
 # Quality
