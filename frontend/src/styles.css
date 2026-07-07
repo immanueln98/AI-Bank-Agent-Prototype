@@ -523,6 +523,15 @@ body {
   flex-direction: column;
   gap: 18px;
 }
+/* Sticky row headers need an unclipped ancestor chain; round the last row's
+   corners by hand since the panel no longer clips them. */
+.supervisor .panel {
+  overflow: visible;
+}
+.supervisor .call-log .call-row:last-child,
+.supervisor .call-log .call-row:last-child > summary {
+  border-radius: 0 0 var(--radius) var(--radius);
+}
 
 .kpi-grid {
   display: grid;
@@ -590,9 +599,58 @@ body {
   cursor: pointer;
   font-size: 13.5px;
   flex-wrap: wrap;
+  list-style: none;
+}
+.call-row summary::-webkit-details-marker {
+  display: none;
+}
+/* chevron: points right when collapsed, down when expanded */
+.call-row summary::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-right: -4px;
+  border-right: 2px solid var(--ink-soft);
+  border-bottom: 2px solid var(--ink-soft);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+.call-row[open] summary::before {
+  transform: rotate(45deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .call-row summary::before {
+    transition: none;
+  }
 }
 .call-row summary:hover {
   background: #fbfcfe;
+}
+/* An expanded call pops out as its own card with an accent rail, so where it
+   starts and ends is unmistakable among the flat collapsed rows. No
+   overflow:hidden here - it would break the sticky summary. */
+.call-row[open] {
+  margin: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--teal);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+.call-row[open] + .call-row {
+  border-top: none;
+}
+.call-row[open] > summary {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  border-radius: 9px 9px 0 0;
+  font-weight: 600;
+}
+.call-row[open] > .call-row__audit {
+  border-radius: 0 0 9px 9px;
 }
 .call-row__time {
   color: var(--ink-soft);
@@ -638,9 +696,8 @@ body {
 }
 
 .call-row__audit {
-  padding: 4px 18px 16px;
-  background: #fbfcfe;
-  border-top: 1px dashed var(--line);
+  padding: 8px 18px 18px 34px;
+  background: var(--bg);
 }
 .call-row__audit h3 {
   margin: 10px 0 8px;
@@ -733,10 +790,16 @@ body {
   gap: 10px;
   align-items: baseline;
   font-size: 13px;
-  padding: 5px 10px;
+  padding: 6px 10px;
   border-radius: 6px;
   background: var(--card);
   border: 1px solid var(--line);
+}
+.ts-msg--caller {
+  border-left: 3px solid var(--navy);
+}
+.ts-msg--agent {
+  border-left: 3px solid var(--teal);
 }
 .ts-msg__who {
   flex: none;

@@ -15,7 +15,12 @@ interface ActiveCall {
 type View = 'console' | 'supervisor';
 
 export default function App() {
-  const [view, setView] = useState<View>('console');
+  // ?view=supervisor deep-links the dashboard (bookmarkable for ops demos).
+  const [view, setView] = useState<View>(() =>
+    new URLSearchParams(window.location.search).get('view') === 'supervisor'
+      ? 'supervisor'
+      : 'console',
+  );
   const [call, setCall] = useState<ActiveCall | null>(null);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
