@@ -93,6 +93,23 @@ Prerequisites: [uv](https://docs.astral.sh/uv/), Node 20+, `make`. Docker option
 No browser needed for a quick check: `make console` gives you a terminal voice/text chat
 with the same agent (backend must be running: `make run-backend`).
 
+### Share the demo with partners (ngrok)
+
+One tunnel is enough — the dev server proxies `/api` to the backend, and call audio goes
+browser ↔ LiveKit Cloud directly (never through your machine):
+
+```bash
+make dev                                        # all three services stay running
+ngrok http 5173                                 # share the https URL it prints
+# optional: ngrok http 5173 --basic-auth "meridian:<pick-a-password>"
+```
+
+Caveats: your laptop must stay awake with `make dev` running (the agent worker answers the
+calls); the mic prompt works because ngrok is HTTPS; anyone with the URL can start calls
+that burn your LiveKit free-tier minutes and inference credit — share privately or add the
+basic-auth flag, and note the free plan allows ~5 concurrent sessions. Free ngrok URLs
+change on every restart, which doubles as cheap access revocation.
+
 ### Make targets
 
 | Target | What it does |
