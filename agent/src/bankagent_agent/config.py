@@ -29,6 +29,11 @@ class AgentSettings(BaseSettings):
     livekit_api_key: str = ""
     livekit_api_secret: str = ""
 
+    # Explicit-dispatch identity. Setting a name means the worker no longer
+    # auto-joins every room: the browser token endpoint and the SIP dispatch
+    # rule both request this agent by name. Must match backend AGENT_NAME.
+    agent_name: str = "meridian-bank-agent"
+
     llm_provider: Literal["inference", "anthropic"] = "inference"
     llm_model: str = "openai/gpt-4.1-mini"
     anthropic_api_key: SecretStr | None = None  # only when llm_provider=anthropic

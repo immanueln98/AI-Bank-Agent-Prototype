@@ -40,8 +40,13 @@ load_dotenv()
 
 server = AgentServer()
 
+# Named (explicit) dispatch: the worker only joins rooms that request this
+# agent by name - the browser token endpoint adds it to the room config, and
+# the SIP dispatch rule (scripts/setup_sip.py) dispatches it for phone calls.
+_AGENT_NAME = AgentSettings().agent_name
 
-@server.rtc_session()
+
+@server.rtc_session(agent_name=_AGENT_NAME)
 async def entrypoint(ctx: JobContext) -> None:
     settings = AgentSettings()
     configure_logging(service="bank-agent", fmt=settings.log_format)

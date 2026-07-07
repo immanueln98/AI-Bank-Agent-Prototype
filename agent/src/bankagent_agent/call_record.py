@@ -11,7 +11,12 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from bankagent_shared import ToolEvent
-from bankagent_shared.models import CallLatencyStats, CallOutcome, CallRecord
+from bankagent_shared.models import (
+    CallLatencyStats,
+    CallOutcome,
+    CallRecord,
+    channel_from_room,
+)
 
 from .session_state import SessionData
 
@@ -54,6 +59,7 @@ def build_call_record(
         session_id=userdata.session_id,
         room=userdata.room_name,
         scenario=scenario_from_room(userdata.room_name),
+        channel=channel_from_room(userdata.room_name),
         started_at=userdata.started_at.isoformat(timespec="seconds"),
         ended_at=ended_at.isoformat(timespec="seconds"),
         duration_seconds=round((ended_at - userdata.started_at).total_seconds(), 1),

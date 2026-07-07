@@ -27,6 +27,7 @@ ENTRIES = [
         "ts": "2026-07-07T10:02:41+00:00",
         "kind": "session_end",
         "duration_seconds": 161.0,
+        "room": "call-x9y8z7",
         "verified_customer": "Thabo",
         "escalated": False,
     },
@@ -62,9 +63,11 @@ class TestListTranscripts:
         assert full["duration_seconds"] == 161.0
         assert full["customer"] == "Thabo"
         assert full["ended"] is True
+        assert full["channel"] == "sip"  # room "call-…" in the session_end line
         crashed = listed[1]
         assert crashed["ended"] is False
         assert crashed["duration_seconds"] is None
+        assert crashed["channel"] is None  # no session_end line to read the room from
 
     def test_ignores_non_session_files(self, transcripts_client) -> None:
         client, root = transcripts_client

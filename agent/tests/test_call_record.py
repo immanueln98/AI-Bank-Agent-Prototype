@@ -45,6 +45,21 @@ class TestScenarioFromRoom:
         assert scenario_from_room("") is None
 
 
+class TestChannel:
+    def test_sip_room_is_tagged_sip(self) -> None:
+        data = _userdata(verified=True)
+        data.room_name = "call-a1b2c3d4"
+        record = build_call_record(data, [])
+        assert record.channel == "sip"
+        assert record.scenario is None
+
+    def test_demo_room_is_web_and_console_fallback(self) -> None:
+        assert build_call_record(_userdata(), []).channel == "web"
+        data = _userdata()
+        data.room_name = "console-xyz"
+        assert build_call_record(data, []).channel == "console"
+
+
 class TestBuildCallRecord:
     def test_rolls_up_events_into_audit_fields(self) -> None:
         data = _userdata(verified=True, customer_first_name="Thabo", account_masked="****5678")

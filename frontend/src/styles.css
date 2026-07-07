@@ -695,6 +695,16 @@ body {
   border-color: var(--red);
 }
 
+.channel-chip {
+  font-size: 11.5px;
+  font-weight: 650;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--navy);
+  color: #fff;
+  letter-spacing: 0.3px;
+}
+
 .call-row__audit {
   padding: 8px 18px 18px 34px;
   background: var(--bg);
