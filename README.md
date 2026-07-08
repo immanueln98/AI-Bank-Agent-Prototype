@@ -245,8 +245,9 @@ Everything is env-driven (`.env`, see `.env.example`):
 | Variable | Default | Notes |
 |---|---|---|
 | `LIVEKIT_URL/API_KEY/API_SECRET` | — | LiveKit Cloud project; also authenticates Inference |
-| `LLM_PROVIDER` | `inference` | `inference` (free credit) or `anthropic` (direct Claude) |
-| `LLM_MODEL` | `openai/gpt-4.1-mini` | e.g. `claude-haiku-4-5` when provider=anthropic |
+| `LLM_PROVIDER` | `inference` | `inference` (free credit) / `anthropic` (direct Claude) / `self_hosted` (on-prem, see below) |
+| `LLM_MODEL` | `openai/gpt-4.1-mini` | e.g. `claude-haiku-4-5` (anthropic) or a served model name (self_hosted) |
+| `SELF_HOSTED_LLM_BASE_URL` / `SELF_HOSTED_LLM_API_KEY` | `http://localhost:8001/v1` / — | only when `LLM_PROVIDER=self_hosted` |
 | `STT_MODEL` / `TTS_MODEL` / `TTS_VOICE` | `deepgram/nova-3` / `cartesia/sonic-3` / — | any LiveKit Inference model string |
 | `AGENT_NAME` | `meridian-bank-agent` | explicit-dispatch name shared by worker, token endpoint, and SIP rule |
 | `BACKEND_BASE_URL` | `http://localhost:8000` | mock bank, as seen from the agent |
@@ -254,6 +255,27 @@ Everything is env-driven (`.env`, see `.env.example`):
 
 Swapping to direct Deepgram/Cartesia plugins later is a new branch in
 `agent/src/bankagent_agent/config.py`'s factories — one file.
+
+### Self-hosted LLM (data sovereignty)
+
+`LLM_PROVIDER=self_hosted` points the agent at any OpenAI-compatible chat-completions
+server on the bank's own network — vLLM, TGI, SGLang, or Ollama all expose this API. No
+customer voice or account data leaves the bank's infrastructure via a third-party API call
+on this path. Start a server and point the agent at it:
+
+```bash
+vllm serve mistralai/Mistral-Small-3.2-24B-Instruct-2506 --port 8001   # single 24GB GPU
+```
+```bash
+# .env
+LLM_PROVIDER=self_hosted
+LLM_MODEL=mistralai/Mistral-Small-3.2-24B-Instruct-2506
+SELF_HOSTED_LLM_BASE_URL=http://localhost:8001/v1
+```
+
+`docs/PITCH.md` has the full recommendation — model choice and license by hardware budget
+(single 24GB GPU up to multi-GPU on-prem clusters), quantization tradeoffs, and named bank
+precedent (BNP Paribas and HSBC both self-host Mistral models for exactly this reason).
 
 ## Path to production
 
@@ -277,7 +299,8 @@ right posture: recording disclosure at call open, PII minimisation in logs/trans
 purpose-bound data access only after verification. Production adds: lawful-basis records &
 consent capture, data-subject rights handling (access/deletion of recordings + transcripts),
 retention schedules, in-country or approved cross-border processing for voice/LLM providers
-(self-hosted LiveKit + VPC model inference are the strict-residency options), and a DPIA.
+(self-hosted LiveKit media + `LLM_PROVIDER=self_hosted` are the strict-residency options —
+see [above](#self-hosted-llm-data-sovereignty)), and a DPIA.
 
 **Languages.** The pipeline is language-pluggable: multilingual STT models, per-language TTS
 voices, and prompt localisation enable Afrikaans, isiZulu, isiXhosa, Setswana. Real coverage

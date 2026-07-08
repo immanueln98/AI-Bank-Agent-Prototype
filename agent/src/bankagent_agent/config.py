@@ -2,8 +2,17 @@
 
 Swapping STT/LLM/TTS is a .env change, never a code change:
 
-    LLM_PROVIDER=inference  LLM_MODEL=openai/gpt-4.1-mini   (default, free credit)
-    LLM_PROVIDER=anthropic  LLM_MODEL=claude-haiku-4-5      (direct Anthropic API)
+    LLM_PROVIDER=inference    LLM_MODEL=openai/gpt-4.1-mini   (default, free credit)
+    LLM_PROVIDER=anthropic    LLM_MODEL=claude-haiku-4-5      (direct Anthropic API)
+    LLM_PROVIDER=self_hosted  LLM_MODEL=<served-model-name>   (on-prem OpenAI-compatible
+                                                                server - see below)
+
+self_hosted talks to any OpenAI-compatible chat-completions server - vLLM, TGI, SGLang,
+or Ollama all expose this API - via SELF_HOSTED_LLM_BASE_URL. No customer voice or account
+data leaves the bank's network on this path: same data-sovereignty argument as running the
+STT/TTS on LiveKit's self-hosted media server instead of Cloud, extended to the model
+itself. See docs/PITCH.md for the model/hardware recommendation (Mistral Small 3.2 or
+Qwen3 on a single 24GB GPU; Llama 3.3 70B FP8 on multi-GPU).
 
 Adding e.g. direct Deepgram/Cartesia plugins later = another branch in the
 factories below.
@@ -34,9 +43,16 @@ class AgentSettings(BaseSettings):
     # rule both request this agent by name. Must match backend AGENT_NAME.
     agent_name: str = "meridian-bank-agent"
 
-    llm_provider: Literal["inference", "anthropic"] = "inference"
+    llm_provider: Literal["inference", "anthropic", "self_hosted"] = "inference"
     llm_model: str = "openai/gpt-4.1-mini"
     anthropic_api_key: SecretStr | None = None  # only when llm_provider=anthropic
+    # OpenAI-compatible endpoint for llm_provider=self_hosted, e.g. a vLLM server:
+    #   vllm serve mistralai/Mistral-Small-3.2-24B-Instruct-2506 --port 8001
+    #   SELF_HOSTED_LLM_BASE_URL=http://localhost:8001/v1
+    self_hosted_llm_base_url: str = "http://localhost:8001/v1"
+    # Most self-hosted servers don't enforce auth on a private network; only
+    # set this if yours does (e.g. an API-gateway in front of the GPU host).
+    self_hosted_llm_api_key: SecretStr | None = None
     stt_model: str = "deepgram/nova-3"
     tts_model: str = "cartesia/sonic-3"
     tts_voice: str = ""  # empty = provider default voice
@@ -57,6 +73,20 @@ def build_llm(settings: AgentSettings) -> llm.LLM:
             api_key=settings.anthropic_api_key.get_secret_value()
             if settings.anthropic_api_key
             else NOT_GIVEN,
+        )
+    if settings.llm_provider == "self_hosted":
+        from livekit.plugins import openai  # lazy: not needed on the default path
+
+        return openai.LLM(
+            model=settings.llm_model,
+            base_url=settings.self_hosted_llm_base_url,
+            # vLLM/TGI/SGLang ignore this unless configured to require it, but
+            # the OpenAI client requires a non-empty string to be passed.
+            api_key=(
+                settings.self_hosted_llm_api_key.get_secret_value()
+                if settings.self_hosted_llm_api_key
+                else "not-required"
+            ),
         )
     return inference.LLM(
         model=settings.llm_model,
