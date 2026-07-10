@@ -20,6 +20,7 @@ from .routers import (
     escalations,
     faq,
     livekit_token,
+    stepup,
     transcripts,
 )
 
@@ -47,6 +48,7 @@ def create_app() -> FastAPI:
 
     prefix = "/api/v1"
     app.include_router(customers.router, prefix=prefix, tags=["customers"])
+    app.include_router(stepup.router, prefix=prefix, tags=["step-up"])
     app.include_router(cards.router, prefix=prefix, tags=["cards"])
     app.include_router(disputes.router, prefix=prefix, tags=["disputes"])
     app.include_router(faq.router, prefix=prefix, tags=["faq"])

@@ -182,6 +182,14 @@ function CallRow({ call }: { call: CallRecord }) {
           {call.scenario && <span className="call-row__scenario"> · {call.scenario}</span>}
         </span>
         {call.channel === 'sip' && <span className="channel-chip">☎ phone</span>}
+        {call.step_up_verified && (
+          <span
+            className="outcome-badge outcome-badge--contained"
+            title="Possession-factor step-up passed on this call"
+          >
+            🛡 step-up
+          </span>
+        )}
         <span className={`outcome-badge outcome-badge--${call.outcome}`}>
           {OUTCOME_LABELS[call.outcome]}
         </span>

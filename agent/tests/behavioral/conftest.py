@@ -31,6 +31,8 @@ from bankagent_shared.models import (
     DisputeResult,
     EscalationTicket,
     FaqResult,
+    StepUpSendResult,
+    StepUpVerifyResult,
     Transaction,
     VerificationResult,
 )
@@ -89,11 +91,23 @@ THABO_TRANSACTIONS = [
 ]
 
 
+STUB_STEP_UP_CODE = "482913"
+
+
 @dataclass
 class StubBankClient:
     """In-memory stand-in for BankClient with Thabo's fixture data."""
 
     verify_calls: list[tuple[str, str]] = field(default_factory=list)
+    step_up_sends: int = 0
+
+    async def send_step_up(self, customer_id: str) -> StepUpSendResult:
+        self.step_up_sends += 1
+        return StepUpSendResult(sent_to="the Meridian app on your registered phone")
+
+    async def verify_step_up(self, customer_id: str, code: str) -> StepUpVerifyResult:
+        ok = code.strip().replace(" ", "") == STUB_STEP_UP_CODE
+        return StepUpVerifyResult(verified=ok, attempts_remaining=0 if ok else 2)
 
     async def verify(self, account_number: str, id_last4: str) -> VerificationResult:
         self.verify_calls.append((account_number, id_last4))

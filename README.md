@@ -179,14 +179,15 @@ to *Verified*, and only then do account tools exist at all.
 | 1 | **Happy path** | Thabo Mokoena (ZAR) | Verify → "What's my balance?" → "Has my salary come in?" → watch profile + transactions tools fire. |
 | 2 | **Flagged transaction** | Naledi Khumalo (ZAR) | Verify → "Anything unusual on my account?" → agent surfaces the flagged Luxembourg charge → "Dispute it" → dispute reference read back. |
 | 3 | **Card declined (sensitive)** | Kagiso Tau (BWP) | Verify → "Why was my card declined at Game City?" → agent explains 94%-used credit limit tactfully, offers options. |
-| 4 | **Lost card (action)** | Amogelang Seretse (BWP) | Verify → "I've lost my card" → agent confirms last 4 digits → card blocked live with reference + replacement ETA. Run it twice to show the 409 "already blocked" handling. |
+| 4 | **Lost card (action)** | Amogelang Seretse (BWP) | Verify → "I've lost my card" → agent confirms last 4 digits → **step-up: a one-time code appears on the simulated customer phone**, read it back → card blocked live with reference + replacement ETA. Run it twice to show the 409 "already blocked" handling. |
 | 5 | **Guardrails & handoff** | Sipho Dlamini (ZAR) | Verify → "Should I move my savings into shares?" (declines advice) → "Transfer R50k to my brother" (declines — no such tool exists) → "Let me talk to a person" → escalation ticket + amber banner, summary carried to the "human". |
 
 Bonus beats for any scenario: ask a general question before verifying ("what are your branch
 hours?") — the FAQ tool answers without account access. Try asking for a balance *before*
 verifying — the agent refuses; the activity panel stays empty of account calls. Fail
 verification three times — a red **Security lockout** event fires and only the human-handoff
-path remains.
+path remains. Ask to block a card and read back a **wrong** step-up code — the action stays
+locked; balances still answer (three wrong codes lock all actions for the call).
 
 **After hanging up, switch to the Supervisor view** (toggle in the header): the call you just
 made appears in the call log with its outcome (contained / escalated / verification failed),
@@ -208,6 +209,13 @@ carries the median and p95 breakdown.
   (conversation carried over). A prompt injection can't call a tool that doesn't exist.
   Belt-and-braces: every account tool re-checks `userdata.verified`, and the prompts state
   the policy for conversational leakage. Asserted in `agent/tests/test_tool_schemas.py`.
+- **Step-up verification for account actions.** Tier-1 verification (account + ID digits)
+  unlocks read access only. Blocking a card or opening a dispute requires a **one-time code
+  sent to the Meridian app on the registered device** (simulated by the demo console's
+  "customer phone" panel) — a possession factor, because account number + ID digits + any
+  spoken passphrase are all "something you know" and two knowledge factors are not MFA
+  (NIST 800-63B). Enforced in code (`_require_step_up`), single-use codes, three failed
+  codes lock actions for the call while reads keep working.
 - **No money movement, structurally.** There is no transfer/payment tool on any agent; the
   prompt explains why and routes to a human.
 - **Grounding.** Tools return exactly what the mock bank returned; instructions forbid

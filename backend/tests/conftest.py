@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from bankagent_backend import fixtures
 from bankagent_backend.app import create_app
-from bankagent_backend.routers import calls
+from bankagent_backend.routers import calls, stepup
 
 
 @pytest.fixture(autouse=True)
@@ -13,6 +13,7 @@ def _reset_fixture_state() -> Iterator[None]:
     yield
     fixtures.reset_state()
     calls.reset_calls()
+    stepup.reset_stepup()
 
 
 @pytest.fixture(autouse=True)

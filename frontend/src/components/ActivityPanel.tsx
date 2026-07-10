@@ -1,11 +1,14 @@
 import { toActivityCards, useToolEvents, type ActivityCard } from '../hooks/useToolEvents';
-import type { ScenarioInfo } from '../lib/types';
-import { useEffect, useRef } from 'react';
+import { fetchStepUpChallenge } from '../lib/api';
+import type { ScenarioInfo, StepUpChallenge } from '../lib/types';
+import { useEffect, useRef, useState } from 'react';
 
 const TOOL_LABELS: Record<string, string> = {
   verify_identity: 'Verify identity',
   get_customer_profile: 'Fetch customer profile',
   get_recent_transactions: 'Fetch recent transactions',
+  send_step_up_code: 'Send step-up code',
+  verify_step_up_code: 'Verify step-up code',
   report_card_lost: 'Report card lost',
   dispute_transaction: 'Dispute transaction',
   search_faq: 'Search FAQ',
@@ -46,6 +49,7 @@ export function ActivityPanel({ scenario }: { scenario: ScenarioInfo }) {
       )}
 
       <CribCard scenario={scenario} />
+      <CustomerPhone />
 
       <div className="activity-panel__feed">
         {cards.length === 0 && (
@@ -87,6 +91,43 @@ function CribCard({ scenario }: { scenario: ScenarioInfo }) {
   );
 }
 
+/** Simulates the customer's registered device: when the agent sends a
+ * step-up code, the "banking app notification" appears here. A real
+ * deployment has no equivalent — the code exists only on the real phone. */
+function CustomerPhone() {
+  const [challenge, setChallenge] = useState<StepUpChallenge | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const poll = () => {
+      fetchStepUpChallenge()
+        .then((c) => !cancelled && setChallenge(c))
+        .catch(() => !cancelled && setChallenge(null));
+    };
+    poll();
+    const timer = setInterval(poll, 2500);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, []);
+
+  if (!challenge) return null;
+  return (
+    <div className="phone-sim" aria-live="polite">
+      <span className="phone-sim__label">📱 Customer's phone (simulated)</span>
+      <div className="phone-sim__notification">
+        <span className="phone-sim__app">Meridian Bank app</span>
+        <span>
+          Hi {challenge.customer_first_name} — your one-time approval code is{' '}
+          <b className="mono phone-sim__code">{challenge.code}</b>. Never share it with anyone
+          except on your own call with the bank.
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function ActivityCardView({ card }: { card: ActivityCard }) {
   if (card.kind === 'identity') {
     return (
@@ -105,6 +146,17 @@ function ActivityCardView({ card }: { card: ActivityCard }) {
         <span className="activity-card__icon">⤴</span>
         <div>
           <span className="activity-card__title">Handed off to human</span>
+          <span className="activity-card__summary">{card.summary}</span>
+        </div>
+      </div>
+    );
+  }
+  if (card.kind === 'stepup') {
+    return (
+      <div className="activity-card activity-card--identity">
+        <span className="activity-card__icon">🛡</span>
+        <div>
+          <span className="activity-card__title">Step-up verified</span>
           <span className="activity-card__summary">{card.summary}</span>
         </div>
       </div>

@@ -5,6 +5,11 @@ conversation history carried over. Every tool still re-checks
 ``userdata.verified`` (defense in depth against future refactors); the
 primary guarantee is that the pre-verification agent simply does not have
 these tools at all.
+
+Tiered authentication: tier-1 verification (account + ID digits) unlocks
+READ tools only. Account ACTIONS (card block, dispute) additionally require
+possession-factor step-up - a one-time code sent to the registered banking
+app - enforced in code by ``_require_step_up``, not just by prompt.
 """
 
 from __future__ import annotations
@@ -14,11 +19,15 @@ from typing import Any
 from livekit.agents import Agent, ChatContext, RunContext, function_tool
 from livekit.agents.llm import ToolError
 
+from bankagent_shared import ToolEvent
+
 from ..bank_client import BankAPIError
 from ..instrumentation import emits_tool_events
 from ..session_state import SessionData
 from .prompts import BANKING_INSTRUCTIONS
 from .support_tools import FALLBACK_LINE, SupportToolsMixin
+
+MAX_STEP_UP_ATTEMPTS = 3
 
 
 def _require_verified(context: RunContext[SessionData]) -> str:
@@ -30,6 +39,25 @@ def _require_verified(context: RunContext[SessionData]) -> str:
             "information. Ask them to verify their identity first."
         )
     return userdata.customer_id
+
+
+def _require_step_up(context: RunContext[SessionData]) -> str:
+    """Account actions need the possession factor on top of tier-1 identity."""
+    customer_id = _require_verified(context)
+    userdata = context.userdata
+    if userdata.step_up_locked:
+        raise ToolError(
+            "Step-up verification is locked for this call after repeated failed "
+            "codes. Do not attempt this action again. Offer a human consultant."
+        )
+    if not userdata.step_up_verified:
+        raise ToolError(
+            "This action changes the customer's account and needs step-up "
+            "verification first. Call send_step_up_code, ask the customer to "
+            "read back the six-digit code from their Meridian app, verify it "
+            "with verify_step_up_code, then retry this action."
+        )
+    return customer_id
 
 
 class BankingAgent(SupportToolsMixin, Agent):
@@ -89,17 +117,99 @@ class BankingAgent(SupportToolsMixin, Agent):
 
     @function_tool()
     @emits_tool_events
+    async def send_step_up_code(self, context: RunContext[SessionData]) -> str:
+        """Send a one-time six-digit approval code to the Meridian app on the
+        customer's registered device. Required before any account action (card
+        block, dispute). Call this once, then ask the customer to open their
+        Meridian app and read the code back to you."""
+        customer_id = _require_verified(context)
+        userdata = context.userdata
+        if userdata.step_up_locked:
+            raise ToolError(
+                "Step-up is locked for this call after repeated failed codes. Do "
+                "not send another code. Offer a human consultant instead."
+            )
+        try:
+            result = await userdata.bank.send_step_up(customer_id)
+        except BankAPIError as exc:
+            raise ToolError(FALLBACK_LINE) from exc
+        return (
+            f"A one-time approval code was sent to {result.sent_to}. Ask the "
+            "customer to open the app and read the six-digit code back, then "
+            "call verify_step_up_code with it."
+        )
+
+    @function_tool()
+    @emits_tool_events
+    async def verify_step_up_code(self, context: RunContext[SessionData], code: str) -> str:
+        """Check the six-digit approval code the customer read back from their
+        Meridian app. On success, account actions unlock for this call.
+
+        Args:
+            code: The six-digit code the customer read out, digits only.
+        """
+        customer_id = _require_verified(context)
+        userdata = context.userdata
+        if userdata.step_up_locked:
+            raise ToolError(
+                "Step-up is locked for this call. Do not try more codes. Offer a "
+                "human consultant instead."
+            )
+        try:
+            result = await userdata.bank.verify_step_up(customer_id, code)
+        except BankAPIError as exc:
+            raise ToolError(FALLBACK_LINE) from exc
+
+        if result.verified:
+            userdata.step_up_verified = True
+            await userdata.emitter.emit(
+                ToolEvent(
+                    type="step_up_verified",
+                    result_summary="Step-up verified: one-time code from the "
+                    "customer's registered device confirmed.",
+                )
+            )
+            return (
+                "Step-up verified. You may now perform the account action the "
+                "customer asked for."
+            )
+
+        userdata.failed_step_up_attempts += 1
+        if userdata.failed_step_up_attempts >= MAX_STEP_UP_ATTEMPTS:
+            userdata.step_up_locked = True
+            await userdata.emitter.emit(
+                ToolEvent(
+                    type="security_lockout",
+                    result_summary=f"{MAX_STEP_UP_ATTEMPTS} failed step-up codes - "
+                    "account actions locked for this call; human handoff only. "
+                    "Balance and transaction questions remain available.",
+                )
+            )
+            return (
+                "That code is not correct, and step-up has now failed three "
+                "times. Do NOT send or check more codes. The customer can still "
+                "ask about balances and transactions, but for any account "
+                "changes offer a human consultant."
+            )
+        return (
+            "That code is not correct. Ask the customer to double-check the "
+            "newest code in their Meridian app and read it again. If they never "
+            "received it, send a fresh one with send_step_up_code."
+        )
+
+    @function_tool()
+    @emits_tool_events
     async def report_card_lost(
         self, context: RunContext[SessionData], card_last4: str
     ) -> dict[str, Any]:
         """Block the customer's card after they report it lost or stolen, and order
-        a replacement. Confirm the last four digits of the card with the customer
-        before calling this.
+        a replacement. Requires step-up verification first. Confirm the last four
+        digits of the card with the customer before calling this.
 
         Args:
             card_last4: The last four digits of the card to block.
         """
-        customer_id = _require_verified(context)
+        customer_id = _require_step_up(context)
         try:
             result = await context.userdata.bank.report_card_lost(customer_id, card_last4)
         except BankAPIError as exc:
@@ -122,14 +232,15 @@ class BankingAgent(SupportToolsMixin, Agent):
         self, context: RunContext[SessionData], transaction_id: str, reason: str
     ) -> dict[str, Any]:
         """Open a dispute on a transaction the customer does not recognise or did
-        not authorise. Look the transaction up with get_recent_transactions first
-        and confirm it with the customer before disputing.
+        not authorise. Requires step-up verification first. Look the transaction
+        up with get_recent_transactions first and confirm it with the customer
+        before disputing.
 
         Args:
             transaction_id: The id of the transaction being disputed.
             reason: The customer's reason, in one sentence.
         """
-        customer_id = _require_verified(context)
+        customer_id = _require_step_up(context)
         try:
             result = await context.userdata.bank.dispute_transaction(
                 customer_id, transaction_id, reason

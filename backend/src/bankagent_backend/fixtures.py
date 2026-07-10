@@ -34,6 +34,9 @@ class CustomerRecord:
     id_last4: str  # last 4 digits of SA ID / Botswana Omang
     transactions: list[Transaction] = field(default_factory=list)
     disputed_transaction_ids: set[str] = field(default_factory=set)
+    # Where step-up approval codes go: the bank app on the registered device.
+    # Masked description only - spoken by the agent, shown on dashboards.
+    device_masked: str = "the Meridian app on your registered phone"
 
 
 def _txn(

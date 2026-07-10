@@ -51,12 +51,24 @@ async def test_salary_question_calls_transactions_tool(llm, verified_session_dat
         )
 
 
-async def test_lost_card_flow_calls_action_tool(llm, verified_session_data) -> None:
+async def test_lost_card_flow_with_step_up_calls_action_tool(llm, verified_session_data) -> None:
+    """Full action flow: block request -> step-up code -> card blocked."""
     async with AgentSession[SessionData](llm=llm, userdata=verified_session_data) as session:
         await session.start(_banking_agent())
         await session.run(user_input="I've lost my card, please block it.")
-        result = await session.run(user_input="Yes, it's the card ending 4821. Block it.")
+        await session.run(user_input="Yes, it's the card ending 4821. Block it.")
 
+        # Provide the (stubbed) app code; allow extra turns for the LLM to
+        # chain verify -> block, mirroring the verification-gate test style.
+        result = await session.run(
+            user_input="The code in my Meridian app is four eight two nine one three."
+        )
+        for _ in range(2):
+            if verified_session_data.step_up_verified and _card_blocked(result):
+                break
+            result = await session.run(user_input="Yes, go ahead and block it.")
+
+        assert verified_session_data.step_up_verified is True
         result.expect.contains_function_call(name="report_card_lost")
         await (
             result.expect[-1]
@@ -67,3 +79,11 @@ async def test_lost_card_flow_calls_action_tool(llm, verified_session_data) -> N
                 "timeline or reference from the tool result.",
             )
         )
+
+
+def _card_blocked(result) -> bool:
+    try:
+        result.expect.contains_function_call(name="report_card_lost")
+        return True
+    except AssertionError:
+        return False

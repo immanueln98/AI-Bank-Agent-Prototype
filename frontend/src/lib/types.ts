@@ -12,6 +12,7 @@ export type ToolEventType =
   | 'tool_call_finished'
   | 'tool_call_failed'
   | 'identity_verified'
+  | 'step_up_verified'
   | 'escalation'
   | 'security_lockout';
 
@@ -61,6 +62,7 @@ export interface CallRecord {
   room: string;
   scenario: string | null;
   channel: CallChannel;
+  step_up_verified: boolean;
   started_at: string;
   ended_at: string;
   duration_seconds: number;
@@ -134,4 +136,11 @@ export interface TranscriptDetail {
   session_id: string;
   date: string;
   entries: TranscriptEntry[];
+}
+
+/** What the customer's (simulated) phone is showing — demo-only endpoint. */
+export interface StepUpChallenge {
+  customer_first_name: string;
+  code: string;
+  sent_at: string;
 }

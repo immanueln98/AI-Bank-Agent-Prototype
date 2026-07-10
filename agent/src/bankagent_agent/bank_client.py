@@ -27,6 +27,8 @@ from bankagent_shared.models import (
     DisputeResult,
     EscalationTicket,
     FaqResult,
+    StepUpSendResult,
+    StepUpVerifyResult,
     Transaction,
     VerificationResult,
 )
@@ -116,6 +118,16 @@ class BankClient:
             "GET", f"/api/v1/customers/{customer_id}/transactions", params={"limit": limit}
         )
         return [Transaction.model_validate(t) for t in response.json()]
+
+    async def send_step_up(self, customer_id: str) -> StepUpSendResult:
+        response = await self._call("POST", f"/api/v1/customers/{customer_id}/stepup/send")
+        return StepUpSendResult.model_validate(response.json())
+
+    async def verify_step_up(self, customer_id: str, code: str) -> StepUpVerifyResult:
+        response = await self._call(
+            "POST", f"/api/v1/customers/{customer_id}/stepup/verify", json={"code": code}
+        )
+        return StepUpVerifyResult.model_validate(response.json())
 
     async def report_card_lost(self, customer_id: str, card_last4: str) -> CardActionResult:
         response = await self._call(

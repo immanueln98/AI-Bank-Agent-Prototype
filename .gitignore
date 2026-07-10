@@ -33,3 +33,5 @@ docs/index.html
 
 # Claude Code session dirs
 .claude/
+docs/pricing.html
+docs/pricing-site.html

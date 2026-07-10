@@ -94,6 +94,31 @@ class FaqResult(BaseModel):
     score: float
 
 
+class StepUpSendResult(BaseModel):
+    """A one-time approval code was issued to the customer's registered device."""
+
+    sent_to: str  # masked device description, e.g. "the Meridian app on phone ****321"
+
+
+class StepUpVerifyRequest(BaseModel):
+    code: str
+
+
+class StepUpVerifyResult(BaseModel):
+    verified: bool
+    attempts_remaining: int  # attempts left on the current code (0 = code dead)
+
+
+class StepUpChallenge(BaseModel):
+    """Demo-only view of the most recent challenge - rendered by the demo
+    console's simulated customer phone. A real deployment has no equivalent
+    endpoint: the code exists only on the customer's actual device."""
+
+    customer_first_name: str
+    code: str
+    sent_at: str  # ISO 8601, UTC
+
+
 class EscalationRequest(BaseModel):
     customer_id: str | None = None
     reason: str
@@ -166,6 +191,7 @@ class CallRecord(BaseModel):
     duration_seconds: float
     outcome: CallOutcome
     verified: bool
+    step_up_verified: bool = False  # possession-factor step-up passed this call
     customer_first_name: str | None = None
     account_masked: str | None = None
     failed_verification_attempts: int = 0

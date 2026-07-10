@@ -65,6 +65,7 @@ def build_call_record(
         duration_seconds=round((ended_at - userdata.started_at).total_seconds(), 1),
         outcome=derive_outcome(userdata),
         verified=userdata.verified,
+        step_up_verified=userdata.step_up_verified,
         customer_first_name=userdata.customer_first_name,
         account_masked=userdata.account_masked,
         failed_verification_attempts=userdata.failed_verification_attempts,

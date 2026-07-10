@@ -34,5 +34,11 @@ class SessionData:
     failed_verification_attempts: int = 0
     locked_out: bool = False  # 3 failed verifications this call
 
+    # Possession-factor step-up (one-time code to the registered banking app):
+    # required for account ACTIONS (card block, dispute); reads need tier 1 only.
+    step_up_verified: bool = False
+    failed_step_up_attempts: int = 0
+    step_up_locked: bool = False  # 3 failed codes this call - actions human-only
+
     escalated: bool = False
     escalation_ref: str | None = None

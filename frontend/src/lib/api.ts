@@ -2,6 +2,7 @@ import type {
   CallMetrics,
   CallRecord,
   ScenarioInfo,
+  StepUpChallenge,
   TokenResponse,
   TranscriptDetail,
   TranscriptMeta,
@@ -38,6 +39,10 @@ export function fetchTranscripts(): Promise<TranscriptMeta[]> {
 
 export function fetchTranscript(sessionId: string): Promise<TranscriptDetail> {
   return request<TranscriptDetail>(`/api/v1/transcripts/${encodeURIComponent(sessionId)}`);
+}
+
+export function fetchStepUpChallenge(): Promise<StepUpChallenge | null> {
+  return request<StepUpChallenge | null>('/api/v1/demo/stepup/latest');
 }
 
 export function fetchToken(scenario: string): Promise<TokenResponse> {

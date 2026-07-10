@@ -16,6 +16,8 @@ ACCOUNT_TOOLS = {
     "get_recent_transactions",
     "report_card_lost",
     "dispute_transaction",
+    "send_step_up_code",
+    "verify_step_up_code",
 }
 
 
@@ -69,3 +71,11 @@ def test_decorated_tools_expose_llm_visible_parameters() -> None:
 def test_tool_descriptions_present() -> None:
     for name, schema in _tool_schemas(IdentityAgent()).items():
         assert schema["description"], f"{name} has no description"
+
+
+def test_action_tools_declare_step_up_requirement() -> None:
+    """The LLM-visible descriptions must state the step-up requirement so the
+    model runs the flow proactively; _require_step_up is the structural backstop."""
+    schemas = _tool_schemas(_banking_agent())
+    for action in ("report_card_lost", "dispute_transaction"):
+        assert "step-up" in schemas[action]["description"].lower()

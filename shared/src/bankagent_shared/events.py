@@ -20,6 +20,7 @@ ToolEventType = Literal[
     "tool_call_finished",
     "tool_call_failed",
     "identity_verified",
+    "step_up_verified",
     "escalation",
     "security_lockout",
 ]
