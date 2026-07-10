@@ -83,7 +83,7 @@ def test_step_up_disabled_removes_the_tools_entirely() -> None:
         chat_ctx=ChatContext(),
         first_name="Thabo",
         account_masked="****5678",
-        step_up_enabled=False,
+        step_up_mode="off",
     )
     asyncio.run(agent.remove_step_up_tools_if_disabled())
     tools = set(_tool_schemas(agent))

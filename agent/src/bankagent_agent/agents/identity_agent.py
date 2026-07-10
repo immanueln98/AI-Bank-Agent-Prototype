@@ -17,7 +17,7 @@ from bankagent_shared import ToolEvent, mask_account
 from ..bank_client import BankAPIError
 from ..instrumentation import emits_tool_events
 from ..session_state import SessionData
-from .banking_agent import BankingAgent
+from .banking_agent import BankingAgent, effective_step_up_mode
 from .prompts import IDENTITY_INSTRUCTIONS, OPENING_GREETING
 from .support_tools import SupportToolsMixin
 
@@ -103,7 +103,7 @@ class IdentityAgent(SupportToolsMixin, Agent):
                 chat_ctx=self.chat_ctx,
                 first_name=result.first_name or "the customer",
                 account_masked=userdata.account_masked,
-                step_up_enabled=userdata.step_up_enabled,
+                step_up_mode=effective_step_up_mode(userdata),
             ),
             f"Identity verified for {result.first_name}. You may now help with their "
             "account. Greet them by name and continue with their original request.",

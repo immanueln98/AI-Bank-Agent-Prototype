@@ -72,7 +72,7 @@ async def test_disabled_mode_blocks_card_without_step_up(llm, verified_session_d
         chat_ctx=ChatContext(),
         first_name="Thabo",
         account_masked="****5678",
-        step_up_enabled=False,
+        step_up_mode="off",
     )
     async with AgentSession[SessionData](llm=llm, userdata=verified_session_data) as session:
         await session.start(agent)
@@ -81,6 +81,30 @@ async def test_disabled_mode_blocks_card_without_step_up(llm, verified_session_d
 
         result.expect.contains_function_call(name="report_card_lost")
         assert verified_session_data.bank.step_up_sends == 0  # no code, no detour
+
+
+async def test_always_mode_gates_reads_behind_the_code(llm, verified_session_data) -> None:
+    """STEP_UP_MODE=always: the code comes before ANY account data."""
+    verified_session_data.step_up_mode = "always"
+    agent = BankingAgent(
+        chat_ctx=ChatContext(),
+        first_name="Thabo",
+        account_masked="****5678",
+        step_up_mode="always",
+    )
+    async with AgentSession[SessionData](llm=llm, userdata=verified_session_data) as session:
+        await session.start(agent)
+        result = await session.run(user_input="What's my cheque account balance?")
+        result.expect.contains_function_call(name="send_step_up_code")
+        assert verified_session_data.step_up_verified is False
+
+        result = await session.run(user_input="The code is four eight two nine one three.")
+        for _ in range(2):
+            if verified_session_data.step_up_verified:
+                break
+            result = await session.run(user_input="Yes, so what's my balance?")
+        assert verified_session_data.step_up_verified is True
+        result.expect.contains_function_call(name="get_customer_profile")
 
 
 async def test_reads_do_not_require_step_up(llm, verified_session_data) -> None:

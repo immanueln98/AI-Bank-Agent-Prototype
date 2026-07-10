@@ -61,6 +61,7 @@ async def entrypoint(ctx: JobContext) -> None:
         known_pii=known_pii,
         room_name=ctx.room.name,
         step_up_enabled=settings.step_up_enabled,
+        step_up_mode=settings.step_up_mode,
     )
     structlog.contextvars.bind_contextvars(session_id=userdata.session_id, room=ctx.room.name)
 

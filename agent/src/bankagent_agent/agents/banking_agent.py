@@ -14,7 +14,7 @@ app - enforced in code by ``_require_step_up``, not just by prompt.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from livekit.agents import Agent, ChatContext, RunContext, function_tool
 from livekit.agents.llm import ToolError
@@ -30,6 +30,15 @@ from .support_tools import FALLBACK_LINE, SupportToolsMixin
 MAX_STEP_UP_ATTEMPTS = 3
 STEP_UP_TOOL_NAMES = {"send_step_up_code", "verify_step_up_code"}
 
+StepUpMode = Literal["off", "actions", "always"]
+
+
+def effective_step_up_mode(userdata: SessionData) -> StepUpMode:
+    """Collapse the two settings into one policy: off / actions / always."""
+    if not userdata.step_up_enabled:
+        return "off"
+    return userdata.step_up_mode
+
 
 def _require_verified(context: RunContext[SessionData]) -> str:
     """Returns the verified customer_id or refuses the call."""
@@ -43,28 +52,32 @@ def _require_verified(context: RunContext[SessionData]) -> str:
 
 
 def _require_step_up(context: RunContext[SessionData]) -> str:
-    """Account actions need the possession factor on top of tier-1 identity.
-
-    With STEP_UP_ENABLED=false the gate degrades to tier-1 only (the demo's
-    original single-tier flow, kept toggleable for A/B pitching).
-    """
+    """The possession factor on top of tier-1 identity. Mode "off" degrades
+    to tier-1 only (the demo's original single-tier flow)."""
     customer_id = _require_verified(context)
     userdata = context.userdata
-    if not userdata.step_up_enabled:
+    if effective_step_up_mode(userdata) == "off":
         return customer_id
     if userdata.step_up_locked:
         raise ToolError(
             "Step-up verification is locked for this call after repeated failed "
-            "codes. Do not attempt this action again. Offer a human consultant."
+            "codes. Do not attempt this again. Offer a human consultant."
         )
     if not userdata.step_up_verified:
         raise ToolError(
-            "This action changes the customer's account and needs step-up "
-            "verification first. Call send_step_up_code, ask the customer to "
-            "read back the six-digit code from their Meridian app, verify it "
-            "with verify_step_up_code, then retry this action."
+            "Step-up verification is required first. Call send_step_up_code, "
+            "ask the customer to read back the six-digit code from their "
+            "Meridian app, verify it with verify_step_up_code, then retry."
         )
     return customer_id
+
+
+def _require_read_access(context: RunContext[SessionData]) -> str:
+    """Reads need tier-1 only - unless the deployment gates the whole session
+    (STEP_UP_MODE=always), in which case the code comes before any account data."""
+    if effective_step_up_mode(context.userdata) == "always":
+        return _require_step_up(context)
+    return _require_verified(context)
 
 
 class BankingAgent(SupportToolsMixin, Agent):
@@ -74,21 +87,21 @@ class BankingAgent(SupportToolsMixin, Agent):
         chat_ctx: ChatContext,
         first_name: str,
         account_masked: str,
-        step_up_enabled: bool = True,
+        step_up_mode: StepUpMode = "actions",
     ) -> None:
-        self._step_up_enabled = step_up_enabled
+        self._step_up_mode: StepUpMode = step_up_mode
         super().__init__(
-            instructions=banking_instructions(step_up_enabled).format(
+            instructions=banking_instructions(step_up_mode).format(
                 first_name=first_name, account_masked=account_masked
             ),
             chat_ctx=chat_ctx,
         )
 
     async def remove_step_up_tools_if_disabled(self) -> None:
-        """With step-up disabled the tools are removed entirely - the LLM
-        cannot call what does not exist (same structural principle as the
-        identity gate). Public so tests can assert the structure directly."""
-        if self._step_up_enabled:
+        """With step-up off the tools are removed entirely - the LLM cannot
+        call what does not exist (same structural principle as the identity
+        gate). Public so tests can assert the structure directly."""
+        if self._step_up_mode != "off":
             return
 
         def name_of(tool: object) -> str | None:
@@ -116,7 +129,7 @@ class BankingAgent(SupportToolsMixin, Agent):
     async def get_customer_profile(self, context: RunContext[SessionData]) -> dict[str, Any]:
         """Fetch the verified customer's profile: accounts with balances, card
         status, and any account flags. Use for balance and account questions."""
-        customer_id = _require_verified(context)
+        customer_id = _require_read_access(context)
         try:
             profile = await context.userdata.bank.get_customer_profile(customer_id)
         except BankAPIError as exc:
@@ -134,7 +147,7 @@ class BankingAgent(SupportToolsMixin, Agent):
         Args:
             limit: How many transactions to fetch (1-50).
         """
-        customer_id = _require_verified(context)
+        customer_id = _require_read_access(context)
         try:
             transactions = await context.userdata.bank.get_recent_transactions(
                 customer_id, limit=max(1, min(limit, 50))
@@ -152,7 +165,7 @@ class BankingAgent(SupportToolsMixin, Agent):
         Meridian app and read the code back to you."""
         customer_id = _require_verified(context)
         userdata = context.userdata
-        if not userdata.step_up_enabled:  # backstop; the tool is normally removed
+        if effective_step_up_mode(userdata) == "off":  # backstop; tool is normally removed
             raise ToolError("Step-up is disabled in this deployment. Perform the action directly.")
         if userdata.step_up_locked:
             raise ToolError(
@@ -180,7 +193,7 @@ class BankingAgent(SupportToolsMixin, Agent):
         """
         customer_id = _require_verified(context)
         userdata = context.userdata
-        if not userdata.step_up_enabled:  # backstop; the tool is normally removed
+        if effective_step_up_mode(userdata) == "off":  # backstop; tool is normally removed
             raise ToolError("Step-up is disabled in this deployment. Perform the action directly.")
         if userdata.step_up_locked:
             raise ToolError(

@@ -215,9 +215,13 @@ carries the median and p95 breakdown.
   "customer phone" panel) — a possession factor, because account number + ID digits + any
   spoken passphrase are all "something you know" and two knowledge factors are not MFA
   (NIST 800-63B). Enforced in code (`_require_step_up`), single-use codes, three failed
-  codes lock actions for the call while reads keep working. Toggleable for A/B demoing:
-  `STEP_UP_ENABLED=false` removes the step-up tools entirely and restores the single-tier
-  flow (restart the worker after changing).
+  codes lock actions for the call while reads keep working. The gate placement is a
+  **policy switch** for A/B demoing: `STEP_UP_ENABLED=false` removes the step-up tools
+  entirely (single-tier flow); `STEP_UP_MODE=always` moves the code requirement to right
+  after identity verification, before any account data — showing friction-vs-risk as a
+  one-line config choice. Production replaces the static switch with risk-based gating
+  (step up at the gate when fraud signals fire — recent SIM swap, prior fraud marker).
+  Restart the worker after changing.
 - **No money movement, structurally.** There is no transfer/payment tool on any agent; the
   prompt explains why and routes to a human.
 - **Grounding.** Tools return exactly what the mock bank returned; instructions forbid
@@ -261,6 +265,7 @@ Everything is env-driven (`.env`, see `.env.example`):
 | `STT_MODEL` / `TTS_MODEL` / `TTS_VOICE` | `deepgram/nova-3` / `cartesia/sonic-3` / — | any LiveKit Inference model string |
 | `AGENT_NAME` | `meridian-bank-agent` | explicit-dispatch name shared by worker, token endpoint, and SIP rule |
 | `STEP_UP_ENABLED` | `true` | `false` demos the single-tier flow: step-up tools removed, actions need tier-1 only |
+| `STEP_UP_MODE` | `actions` | where the gate sits: `actions` (card blocks/disputes only) or `always` (before any account data) |
 | `BACKEND_BASE_URL` | `http://localhost:8000` | mock bank, as seen from the agent |
 | `LOG_FORMAT` | `console` | `json` in containers |
 

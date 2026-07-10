@@ -57,10 +57,18 @@ class AgentSettings(BaseSettings):
     tts_model: str = "cartesia/sonic-3"
     tts_voice: str = ""  # empty = provider default voice
 
-    # Step-up verification (one-time app codes) for account actions. Set
-    # false to demo the original single-tier flow: the step-up tools are
-    # removed from the agent entirely and actions need tier-1 identity only.
+    # Step-up verification (one-time app codes). STEP_UP_ENABLED=false turns
+    # it off entirely (single-tier demo; the step-up tools are removed from
+    # the agent). When enabled, STEP_UP_MODE places the gate:
+    #   actions -> reads need tier-1 only; card blocks/disputes need the code
+    #              (risk-proportionate - the production-standard policy)
+    #   always  -> the code is required right after tier-1, before ANY
+    #              account access (maximal gate, higher friction on every call)
+    # Production replaces this static switch with risk-based gating driven by
+    # fraud signals (SIM-swap flags, prior fraud markers). Worker restart
+    # required after changing either value.
     step_up_enabled: bool = True
+    step_up_mode: Literal["actions", "always"] = "actions"
 
     backend_base_url: str = "http://localhost:8000"
     backend_timeout_seconds: float = 5.0

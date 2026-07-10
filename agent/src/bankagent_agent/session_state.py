@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import Literal
 from uuid import uuid4
 
 from bankagent_shared import KnownPII
@@ -34,11 +35,12 @@ class SessionData:
     failed_verification_attempts: int = 0
     locked_out: bool = False  # 3 failed verifications this call
 
-    # Possession-factor step-up (one-time code to the registered banking app):
-    # required for account ACTIONS (card block, dispute); reads need tier 1 only.
-    # step_up_enabled mirrors AgentSettings.step_up_enabled (STEP_UP_ENABLED):
-    # when False the step-up tools are removed and actions need tier 1 only.
+    # Possession-factor step-up (one-time code to the registered banking app).
+    # Mirrors AgentSettings: step_up_enabled=False removes step-up entirely;
+    # step_up_mode places the gate ("actions" = card block/dispute only,
+    # "always" = before any account access).
     step_up_enabled: bool = True
+    step_up_mode: Literal["actions", "always"] = "actions"
     step_up_verified: bool = False
     failed_step_up_attempts: int = 0
     step_up_locked: bool = False  # 3 failed codes this call - actions human-only

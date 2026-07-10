@@ -82,6 +82,18 @@ receive or read the code, or step-up fails three times, do not keep trying -
 offer a human consultant, and reassure them that balance questions still work.
 """
 
+_STEP_UP_ALWAYS_PARAGRAPH = """
+Step-up verification is required BEFORE any account information in this
+deployment. Immediately after greeting the verified caller, explain that for
+security you are sending a one-time code to the Meridian app on their
+registered device, call send_step_up_code, ask them to read the six digit
+code back, and check it with verify_step_up_code. Do not answer any account
+question or perform any action until step-up succeeds; general questions via
+the FAQ tool are fine. Complete step-up once per call, then help normally.
+If the customer cannot receive the code, or step-up fails three times, do
+not keep trying - offer a human consultant.
+"""
+
 _NO_STEP_UP_PARAGRAPH = """
 Step-up verification is disabled in this deployment. Ignore any mention of
 step-up codes in tool descriptions: perform account actions directly once the
@@ -98,11 +110,18 @@ for a person, arrange the handoff rather than improvising.
 """
 
 
-def banking_instructions(step_up_enabled: bool) -> str:
-    """Post-verification instructions template ({first_name}/{account_masked})."""
-    middle = _STEP_UP_PARAGRAPH if step_up_enabled else _NO_STEP_UP_PARAGRAPH
+def banking_instructions(step_up_mode: str) -> str:
+    """Post-verification instructions template ({first_name}/{account_masked}).
+
+    step_up_mode: "off" | "actions" | "always" - see AgentSettings.
+    """
+    middle = {
+        "off": _NO_STEP_UP_PARAGRAPH,
+        "actions": _STEP_UP_PARAGRAPH,
+        "always": _STEP_UP_ALWAYS_PARAGRAPH,
+    }[step_up_mode]
     return _SHARED_STYLE + _BANKING_CORE + middle + _BANKING_TAIL
 
 
 # Default template, kept for direct use and backwards compatibility.
-BANKING_INSTRUCTIONS = banking_instructions(step_up_enabled=True)
+BANKING_INSTRUCTIONS = banking_instructions("actions")
