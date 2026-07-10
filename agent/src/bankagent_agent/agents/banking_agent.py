@@ -202,8 +202,7 @@ class BankingAgent(SupportToolsMixin, Agent):
                 )
             )
             return (
-                "Step-up verified. You may now perform the account action the "
-                "customer asked for."
+                "Step-up verified. You may now perform the account action the customer asked for."
             )
 
         userdata.failed_step_up_attempts += 1

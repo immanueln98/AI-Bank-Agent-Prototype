@@ -8,15 +8,21 @@ repos:
       - id: check-added-large-files
       - id: detect-private-key
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.4
-    hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
-
+  # ruff runs via uv so the hook uses the SAME locked version as `make lint`
+  # and CI - a version-pinned ruff-pre-commit hook once formatted a file in a
+  # way a newer CI ruff rejected.
   - repo: local
     hooks:
+      - id: ruff
+        name: ruff
+        entry: uv run ruff check --fix --force-exclude
+        language: system
+        types_or: [python, pyi]
+      - id: ruff-format
+        name: ruff-format
+        entry: uv run ruff format --force-exclude
+        language: system
+        types_or: [python, pyi]
       - id: mypy
         name: mypy
         entry: uv run mypy
