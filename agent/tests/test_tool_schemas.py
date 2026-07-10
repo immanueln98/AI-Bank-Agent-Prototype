@@ -1,14 +1,17 @@
 """Structural guarantees of the verification gate + decorator/schema interop.
 
-These tests are the cheap, no-LLM assertion of the two core safety claims:
+These tests are the cheap, no-LLM assertion of the core safety claims:
 1. The pre-verification agent has NO account tools (structural gate).
 2. @emits_tool_events does not break LiveKit's tool-schema extraction.
+3. With STEP_UP_ENABLED=false the step-up tools do not exist at all.
 """
+
+import asyncio
 
 from livekit.agents import ChatContext
 from livekit.agents.llm import utils as llm_utils
 
-from bankagent_agent.agents.banking_agent import BankingAgent
+from bankagent_agent.agents.banking_agent import STEP_UP_TOOL_NAMES, BankingAgent
 from bankagent_agent.agents.identity_agent import IdentityAgent
 
 ACCOUNT_TOOLS = {
@@ -71,6 +74,27 @@ def test_decorated_tools_expose_llm_visible_parameters() -> None:
 def test_tool_descriptions_present() -> None:
     for name, schema in _tool_schemas(IdentityAgent()).items():
         assert schema["description"], f"{name} has no description"
+
+
+def test_step_up_disabled_removes_the_tools_entirely() -> None:
+    """STEP_UP_ENABLED=false is structural, not prompt-level: after on_enter's
+    filter runs, the step-up tools do not exist for the LLM to call."""
+    agent = BankingAgent(
+        chat_ctx=ChatContext(),
+        first_name="Thabo",
+        account_masked="****5678",
+        step_up_enabled=False,
+    )
+    asyncio.run(agent.remove_step_up_tools_if_disabled())
+    tools = set(_tool_schemas(agent))
+    assert not tools & STEP_UP_TOOL_NAMES
+    assert {"report_card_lost", "dispute_transaction", "get_customer_profile"} <= tools
+
+
+def test_step_up_enabled_keeps_the_tools() -> None:
+    agent = _banking_agent()
+    asyncio.run(agent.remove_step_up_tools_if_disabled())  # no-op when enabled
+    assert set(_tool_schemas(agent)) >= STEP_UP_TOOL_NAMES
 
 
 def test_action_tools_declare_step_up_requirement() -> None:

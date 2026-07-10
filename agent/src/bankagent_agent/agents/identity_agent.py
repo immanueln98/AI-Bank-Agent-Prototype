@@ -103,6 +103,7 @@ class IdentityAgent(SupportToolsMixin, Agent):
                 chat_ctx=self.chat_ctx,
                 first_name=result.first_name or "the customer",
                 account_masked=userdata.account_masked,
+                step_up_enabled=userdata.step_up_enabled,
             ),
             f"Identity verified for {result.first_name}. You may now help with their "
             "account. Greet them by name and continue with their original request.",

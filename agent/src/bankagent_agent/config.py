@@ -57,6 +57,11 @@ class AgentSettings(BaseSettings):
     tts_model: str = "cartesia/sonic-3"
     tts_voice: str = ""  # empty = provider default voice
 
+    # Step-up verification (one-time app codes) for account actions. Set
+    # false to demo the original single-tier flow: the step-up tools are
+    # removed from the agent entirely and actions need tier-1 identity only.
+    step_up_enabled: bool = True
+
     backend_base_url: str = "http://localhost:8000"
     backend_timeout_seconds: float = 5.0
     transcripts_dir: Path = Path("transcripts")

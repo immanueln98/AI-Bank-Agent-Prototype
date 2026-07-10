@@ -55,7 +55,13 @@ async def entrypoint(ctx: JobContext) -> None:
     emitter = ToolEventEmitter(known_pii)
     emitter.attach_room(ctx.room)
     bank = BankClient(settings)
-    userdata = SessionData(bank=bank, emitter=emitter, known_pii=known_pii, room_name=ctx.room.name)
+    userdata = SessionData(
+        bank=bank,
+        emitter=emitter,
+        known_pii=known_pii,
+        room_name=ctx.room.name,
+        step_up_enabled=settings.step_up_enabled,
+    )
     structlog.contextvars.bind_contextvars(session_id=userdata.session_id, room=ctx.room.name)
 
     recorder = TranscriptRecorder(settings.transcripts_dir, userdata.session_id, known_pii)

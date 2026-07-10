@@ -36,6 +36,9 @@ class SessionData:
 
     # Possession-factor step-up (one-time code to the registered banking app):
     # required for account ACTIONS (card block, dispute); reads need tier 1 only.
+    # step_up_enabled mirrors AgentSettings.step_up_enabled (STEP_UP_ENABLED):
+    # when False the step-up tools are removed and actions need tier 1 only.
+    step_up_enabled: bool = True
     step_up_verified: bool = False
     failed_step_up_attempts: int = 0
     step_up_locked: bool = False  # 3 failed codes this call - actions human-only

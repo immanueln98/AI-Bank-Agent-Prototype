@@ -65,6 +65,24 @@ async def test_wrong_code_does_not_unlock_actions(llm, verified_session_data) ->
         )
 
 
+async def test_disabled_mode_blocks_card_without_step_up(llm, verified_session_data) -> None:
+    """STEP_UP_ENABLED=false restores the original single-tier flow."""
+    verified_session_data.step_up_enabled = False
+    agent = BankingAgent(
+        chat_ctx=ChatContext(),
+        first_name="Thabo",
+        account_masked="****5678",
+        step_up_enabled=False,
+    )
+    async with AgentSession[SessionData](llm=llm, userdata=verified_session_data) as session:
+        await session.start(agent)
+        await session.run(user_input="I've lost my card, please block it.")
+        result = await session.run(user_input="Yes, it's the card ending 4821. Block it.")
+
+        result.expect.contains_function_call(name="report_card_lost")
+        assert verified_session_data.bank.step_up_sends == 0  # no code, no detour
+
+
 async def test_reads_do_not_require_step_up(llm, verified_session_data) -> None:
     async with AgentSession[SessionData](llm=llm, userdata=verified_session_data) as session:
         await session.start(_banking_agent())

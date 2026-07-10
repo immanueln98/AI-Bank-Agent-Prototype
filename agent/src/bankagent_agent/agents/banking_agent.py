@@ -24,10 +24,11 @@ from bankagent_shared import ToolEvent
 from ..bank_client import BankAPIError
 from ..instrumentation import emits_tool_events
 from ..session_state import SessionData
-from .prompts import BANKING_INSTRUCTIONS
+from .prompts import banking_instructions
 from .support_tools import FALLBACK_LINE, SupportToolsMixin
 
 MAX_STEP_UP_ATTEMPTS = 3
+STEP_UP_TOOL_NAMES = {"send_step_up_code", "verify_step_up_code"}
 
 
 def _require_verified(context: RunContext[SessionData]) -> str:
@@ -42,9 +43,15 @@ def _require_verified(context: RunContext[SessionData]) -> str:
 
 
 def _require_step_up(context: RunContext[SessionData]) -> str:
-    """Account actions need the possession factor on top of tier-1 identity."""
+    """Account actions need the possession factor on top of tier-1 identity.
+
+    With STEP_UP_ENABLED=false the gate degrades to tier-1 only (the demo's
+    original single-tier flow, kept toggleable for A/B pitching).
+    """
     customer_id = _require_verified(context)
     userdata = context.userdata
+    if not userdata.step_up_enabled:
+        return customer_id
     if userdata.step_up_locked:
         raise ToolError(
             "Step-up verification is locked for this call after repeated failed "
@@ -61,15 +68,36 @@ def _require_step_up(context: RunContext[SessionData]) -> str:
 
 
 class BankingAgent(SupportToolsMixin, Agent):
-    def __init__(self, *, chat_ctx: ChatContext, first_name: str, account_masked: str) -> None:
+    def __init__(
+        self,
+        *,
+        chat_ctx: ChatContext,
+        first_name: str,
+        account_masked: str,
+        step_up_enabled: bool = True,
+    ) -> None:
+        self._step_up_enabled = step_up_enabled
         super().__init__(
-            instructions=BANKING_INSTRUCTIONS.format(
+            instructions=banking_instructions(step_up_enabled).format(
                 first_name=first_name, account_masked=account_masked
             ),
             chat_ctx=chat_ctx,
         )
 
+    async def remove_step_up_tools_if_disabled(self) -> None:
+        """With step-up disabled the tools are removed entirely - the LLM
+        cannot call what does not exist (same structural principle as the
+        identity gate). Public so tests can assert the structure directly."""
+        if self._step_up_enabled:
+            return
+
+        def name_of(tool: object) -> str | None:
+            return getattr(getattr(tool, "info", None), "name", None)
+
+        await self.update_tools([t for t in self.tools if name_of(t) not in STEP_UP_TOOL_NAMES])
+
     async def on_enter(self) -> None:
+        await self.remove_step_up_tools_if_disabled()
         # The reply that accompanies the verify_identity handoff is generated
         # with tools disabled (the framework drains the old activity), so it
         # can only announce what comes next. This fresh generation is what
@@ -124,6 +152,8 @@ class BankingAgent(SupportToolsMixin, Agent):
         Meridian app and read the code back to you."""
         customer_id = _require_verified(context)
         userdata = context.userdata
+        if not userdata.step_up_enabled:  # backstop; the tool is normally removed
+            raise ToolError("Step-up is disabled in this deployment. Perform the action directly.")
         if userdata.step_up_locked:
             raise ToolError(
                 "Step-up is locked for this call after repeated failed codes. Do "
@@ -150,6 +180,8 @@ class BankingAgent(SupportToolsMixin, Agent):
         """
         customer_id = _require_verified(context)
         userdata = context.userdata
+        if not userdata.step_up_enabled:  # backstop; the tool is normally removed
+            raise ToolError("Step-up is disabled in this deployment. Perform the action directly.")
         if userdata.step_up_locked:
             raise ToolError(
                 "Step-up is locked for this call. Do not try more codes. Offer a "

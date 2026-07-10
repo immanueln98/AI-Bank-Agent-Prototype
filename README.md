@@ -215,7 +215,9 @@ carries the median and p95 breakdown.
   "customer phone" panel) — a possession factor, because account number + ID digits + any
   spoken passphrase are all "something you know" and two knowledge factors are not MFA
   (NIST 800-63B). Enforced in code (`_require_step_up`), single-use codes, three failed
-  codes lock actions for the call while reads keep working.
+  codes lock actions for the call while reads keep working. Toggleable for A/B demoing:
+  `STEP_UP_ENABLED=false` removes the step-up tools entirely and restores the single-tier
+  flow (restart the worker after changing).
 - **No money movement, structurally.** There is no transfer/payment tool on any agent; the
   prompt explains why and routes to a human.
 - **Grounding.** Tools return exactly what the mock bank returned; instructions forbid
@@ -258,6 +260,7 @@ Everything is env-driven (`.env`, see `.env.example`):
 | `SELF_HOSTED_LLM_BASE_URL` / `SELF_HOSTED_LLM_API_KEY` | `http://localhost:8001/v1` / — | only when `LLM_PROVIDER=self_hosted` |
 | `STT_MODEL` / `TTS_MODEL` / `TTS_VOICE` | `deepgram/nova-3` / `cartesia/sonic-3` / — | any LiveKit Inference model string |
 | `AGENT_NAME` | `meridian-bank-agent` | explicit-dispatch name shared by worker, token endpoint, and SIP rule |
+| `STEP_UP_ENABLED` | `true` | `false` demos the single-tier flow: step-up tools removed, actions need tier-1 only |
 | `BACKEND_BASE_URL` | `http://localhost:8000` | mock bank, as seen from the agent |
 | `LOG_FORMAT` | `console` | `json` in containers |
 

@@ -61,16 +61,16 @@ not try again - offer to connect them to a consultant instead.
 """
 )
 
-BANKING_INSTRUCTIONS = (
-    _SHARED_STYLE
-    + """
+_BANKING_CORE = """
 Current stage: the caller has been verified as {first_name} (account
 {account_masked}). Greet them by first name once, then help.
 
 Use your tools for every account question: profile and balances, recent
 transactions, reporting a lost or stolen card, and disputing a transaction the
 customer does not recognise. Call the tool first, then answer from its result.
+"""
 
+_STEP_UP_PARAGRAPH = """
 Step-up verification for account actions: questions about balances and
 transactions need nothing extra, but before any account CHANGE - blocking a
 card or opening a dispute - you must complete step-up once per call. Briefly
@@ -80,7 +80,15 @@ six digit code back, and check it with verify_step_up_code. Once verified, do
 not repeat step-up for further actions on this call. If the customer cannot
 receive or read the code, or step-up fails three times, do not keep trying -
 offer a human consultant, and reassure them that balance questions still work.
+"""
 
+_NO_STEP_UP_PARAGRAPH = """
+Step-up verification is disabled in this deployment. Ignore any mention of
+step-up codes in tool descriptions: perform account actions directly once the
+caller is verified.
+"""
+
+_BANKING_TAIL = """
 When discussing a sensitive situation, such as a declined card or a balance
 close to a credit limit, be matter-of-fact and kind. State the facts from the
 tools, and offer practical next steps without judgement.
@@ -88,4 +96,13 @@ tools, and offer practical next steps without judgement.
 If the customer asks about something you have no tool for, or explicitly asks
 for a person, arrange the handoff rather than improvising.
 """
-)
+
+
+def banking_instructions(step_up_enabled: bool) -> str:
+    """Post-verification instructions template ({first_name}/{account_masked})."""
+    middle = _STEP_UP_PARAGRAPH if step_up_enabled else _NO_STEP_UP_PARAGRAPH
+    return _SHARED_STYLE + _BANKING_CORE + middle + _BANKING_TAIL
+
+
+# Default template, kept for direct use and backwards compatibility.
+BANKING_INSTRUCTIONS = banking_instructions(step_up_enabled=True)
