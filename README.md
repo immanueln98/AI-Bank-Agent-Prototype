@@ -229,7 +229,11 @@ carries the median and p95 breakdown.
   activity panel with its (masked) arguments and result summary.
 - **PII redaction everywhere.** Known values (whatever account number the caller says) are
   masked exactly, plus regex safety nets for SA ID / Omang / account-number shapes — applied
-  to logs (structlog processor), on-disk transcripts, and the browser event stream.
+  to logs (structlog processor), on-disk transcripts, and the browser event stream. Voice
+  transcripts carry numbers as **words** ("one double zero two three…"), so a third net
+  masks any run of 4+ spoken digit-words or separated digits — catching the caller reading
+  digits out *before* the system knows the value. The agent is also instructed never to
+  read account/ID digits back to the caller, so recordings don't contain the echo either.
 - **Failure has a voice.** Backend calls get timeouts + retries (tenacity, 5xx/transport
   only); definitive failures raise `ToolError` with an instruction for what the agent should
   *say* (apologise, offer a human) instead of crashing or going silent.
