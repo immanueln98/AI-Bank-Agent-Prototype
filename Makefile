@@ -2,7 +2,7 @@
 # The services read .env themselves, so this is convenience, not a requirement.
 -include .env
 .PHONY: setup dev run-agent run-backend run-frontend lint format typecheck \
-        test test-cov test-behavioral docker-up clean setup-sip
+        test test-cov test-behavioral docker-up clean setup-sip publish-site
 
 # This machine's ~/.local/share is root-owned; keep uv's managed Pythons in a
 # user-writable location. Harmless on machines where the default works.
@@ -38,6 +38,9 @@ console: ## Talk to the agent in the terminal (no browser/frontend needed)
 
 setup-sip: ## Create LiveKit inbound trunk + dispatch rule (NUMBERS="+27..." [AUTH=user:pass])
 	uv run python scripts/setup_sip.py --numbers $(NUMBERS) $(if $(AUTH),--auth $(AUTH))
+
+publish-site: ## Build index.html + pricing.html from local sources and push to gh-pages
+	bash scripts/publish_site.sh $(if $(MSG),"$(MSG)")
 
 # ---------------------------------------------------------------------------
 # Quality
