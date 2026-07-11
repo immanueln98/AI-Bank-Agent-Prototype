@@ -38,14 +38,14 @@ def _banking_agent() -> BankingAgent:
 
 def test_identity_agent_has_no_account_tools() -> None:
     tools = set(_tool_schemas(IdentityAgent()))
-    assert tools == {"verify_identity", "search_faq", "escalate_to_human"}
+    assert tools == {"verify_identity", "search_faq", "escalate_to_human", "end_call"}
     assert not tools & ACCOUNT_TOOLS
 
 
 def test_banking_agent_has_full_toolset() -> None:
     tools = set(_tool_schemas(_banking_agent()))
     assert tools >= ACCOUNT_TOOLS
-    assert {"search_faq", "escalate_to_human"} <= tools
+    assert {"search_faq", "escalate_to_human", "end_call"} <= tools
     assert "verify_identity" not in tools  # no re-verification loops post-handoff
 
 

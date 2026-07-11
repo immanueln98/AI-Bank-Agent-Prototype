@@ -81,3 +81,28 @@ class SupportToolsMixin:
             "consultant will assist them shortly, read the reference number slowly, "
             "and close the call politely."
         )
+
+    @function_tool()
+    @emits_tool_events
+    async def end_call(self, context: RunContext[SessionData], reason: str) -> str:
+        """End the phone call. Use ONLY after you have said goodbye and there is
+        nothing left to do: the conversation is complete, the caller has no
+        banking need after two redirections, or you have warned an abusive
+        caller once and the behaviour continued.
+
+        Args:
+            reason: Short category, e.g. "completed", "no_banking_need" or "abusive".
+        """
+        userdata = context.userdata
+        if userdata.hangup is None:  # unit/LLM-test harness: no live room
+            return "There is no live call to end in this environment."
+        # Let the goodbye that accompanies this tool call finish playing first.
+        await context.wait_for_playout()
+        try:
+            await userdata.hangup()
+        except Exception as exc:  # the call is ending either way; never crash it
+            raise ToolError(
+                "The call could not be ended from this side. Say goodbye and "
+                "let the caller hang up."
+            ) from exc
+        return "The call has ended."

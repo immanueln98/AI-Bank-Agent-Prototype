@@ -15,6 +15,7 @@ from livekit.agents import (
     AgentSession,
     JobContext,
     MetricsCollectedEvent,
+    UserStateChangedEvent,
     cli,
     inference,
     metrics,
@@ -27,6 +28,7 @@ from .bank_client import BankAPIError, BankClient
 from .call_record import build_call_record
 from .config import AgentSettings, build_llm, build_stt, build_tts
 from .events import ToolEventEmitter
+from .idle import IdleWatchdog
 from .latency import LatencyCollector
 from .session_state import SessionData
 from .transcripts import TranscriptRecorder
@@ -55,6 +57,10 @@ async def entrypoint(ctx: JobContext) -> None:
     emitter = ToolEventEmitter(known_pii)
     emitter.attach_room(ctx.room)
     bank = BankClient(settings)
+
+    async def _hang_up() -> None:
+        await ctx.delete_room()
+
     userdata = SessionData(
         bank=bank,
         emitter=emitter,
@@ -62,6 +68,7 @@ async def entrypoint(ctx: JobContext) -> None:
         room_name=ctx.room.name,
         step_up_enabled=settings.step_up_enabled,
         step_up_mode=settings.step_up_mode,
+        hangup=_hang_up,
     )
     structlog.contextvars.bind_contextvars(session_id=userdata.session_id, room=ctx.room.name)
 
@@ -83,8 +90,23 @@ async def entrypoint(ctx: JobContext) -> None:
         # presence tightens endpointing to 0.3s min / 2.5s max automatically.
         turn_detection=inference.TurnDetector(),
         preemptive_generation=True,
+        # None disables the "away" user state entirely (IDLE_TIMEOUT_ENABLED=false).
+        user_away_timeout=(
+            settings.idle_prompt_after_seconds if settings.idle_timeout_enabled else None
+        ),
     )
     recorder.start(session)
+
+    watchdog: IdleWatchdog | None = None
+    if settings.idle_timeout_enabled:
+        watchdog = IdleWatchdog(
+            session, hangup_after=settings.idle_hangup_after_seconds, end_call=_hang_up
+        )
+
+        @session.on("user_state_changed")
+        def _on_user_state(ev: UserStateChangedEvent) -> None:
+            assert watchdog is not None
+            watchdog.on_user_state(ev.new_state)
 
     usage = metrics.UsageCollector()
     latency = LatencyCollector()
@@ -102,6 +124,7 @@ async def entrypoint(ctx: JobContext) -> None:
                 "account": userdata.account_masked,
                 "escalated": userdata.escalated,
                 "escalation_ref": userdata.escalation_ref,
+                "idle_hangup": watchdog.hung_up if watchdog else False,
                 "usage": str(usage.get_summary()),
             }
         )

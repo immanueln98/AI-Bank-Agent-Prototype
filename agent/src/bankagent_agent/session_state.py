@@ -8,6 +8,7 @@ tools at all - see agents/identity_agent.py).
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Literal
@@ -47,3 +48,7 @@ class SessionData:
 
     escalated: bool = False
     escalation_ref: str | None = None
+
+    # Ends the live call (deletes the room). Wired in main.py; None in unit
+    # tests and the LLM test harness, where the end_call tool becomes a no-op.
+    hangup: Callable[[], Awaitable[None]] | None = None

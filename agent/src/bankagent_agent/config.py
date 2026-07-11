@@ -70,6 +70,15 @@ class AgentSettings(BaseSettings):
     step_up_enabled: bool = True
     step_up_mode: Literal["actions", "always"] = "actions"
 
+    # Idle-caller watchdog: after IDLE_PROMPT_AFTER_SECONDS of caller silence
+    # the agent asks "are you still there?"; after IDLE_HANGUP_AFTER_SECONDS
+    # more it says goodbye and ends the call. IDLE_TIMEOUT_ENABLED=false
+    # disables the whole feature - set this when pitching with a muted mic,
+    # or the agent will hang up on your demo mid-explanation.
+    idle_timeout_enabled: bool = True
+    idle_prompt_after_seconds: float = 20.0
+    idle_hangup_after_seconds: float = 15.0
+
     backend_base_url: str = "http://localhost:8000"
     backend_timeout_seconds: float = 5.0
     transcripts_dir: Path = Path("transcripts")

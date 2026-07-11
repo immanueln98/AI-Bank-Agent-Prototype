@@ -233,6 +233,12 @@ carries the median and p95 breakdown.
 - **Failure has a voice.** Backend calls get timeouts + retries (tenacity, 5xx/transport
   only); definitive failures raise `ToolError` with an instruction for what the agent should
   *say* (apologise, offer a human) instead of crashing or going silent.
+- **Calls end on purpose.** A silent caller gets an "are you still there?" prompt and then a
+  polite goodbye + hangup (idle watchdog, toggleable — see `IDLE_TIMEOUT_ENABLED`). Off-topic
+  callers get at most one friendly sentence and a steer back to banking; after two
+  redirections with no banking need the agent wraps up via its `end_call` tool or offers a
+  consultant — standard contact-centre call-control, and a cost guard against the support
+  line being used as a free chatbot. Completed conversations close themselves the same way.
 - **Every session leaves a masked transcript** (`transcripts/<date>/<session>.jsonl`):
   turns, tool events, and an end-of-call summary — QA/replay ready, and browsable in the
   Supervisor view (the backend serves the same directory read-only; docker compose shares
@@ -266,6 +272,7 @@ Everything is env-driven (`.env`, see `.env.example`):
 | `AGENT_NAME` | `meridian-bank-agent` | explicit-dispatch name shared by worker, token endpoint, and SIP rule |
 | `STEP_UP_ENABLED` | `true` | `false` demos the single-tier flow: step-up tools removed, actions need tier-1 only |
 | `STEP_UP_MODE` | `actions` | where the gate sits: `actions` (card blocks/disputes only) or `always` (before any account data) |
+| `IDLE_TIMEOUT_ENABLED` | `true` | silent-caller watchdog: prompt after `IDLE_PROMPT_AFTER_SECONDS` (20), hang up after `IDLE_HANGUP_AFTER_SECONDS` (15) more. **Set `false` when presenting with a muted mic** |
 | `BACKEND_BASE_URL` | `http://localhost:8000` | mock bank, as seen from the agent |
 | `LOG_FORMAT` | `console` | `json` in containers |
 

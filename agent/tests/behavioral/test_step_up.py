@@ -94,17 +94,30 @@ async def test_always_mode_gates_reads_behind_the_code(llm, verified_session_dat
     )
     async with AgentSession[SessionData](llm=llm, userdata=verified_session_data) as session:
         await session.start(agent)
-        result = await session.run(user_input="What's my cheque account balance?")
-        result.expect.contains_function_call(name="send_step_up_code")
+        # The LLM may spend a turn announcing the security step before sending.
+        await session.run(user_input="What's my cheque account balance?")
+        if verified_session_data.bank.step_up_sends == 0:
+            await session.run(user_input="Okay, go ahead.")
+        assert verified_session_data.bank.step_up_sends >= 1
         assert verified_session_data.step_up_verified is False
 
         result = await session.run(user_input="The code is four eight two nine one three.")
-        for _ in range(2):
-            if verified_session_data.step_up_verified:
+        profile_answered = _called_profile(result)
+        for _ in range(3):
+            if verified_session_data.step_up_verified and profile_answered:
                 break
             result = await session.run(user_input="Yes, so what's my balance?")
+            profile_answered = profile_answered or _called_profile(result)
         assert verified_session_data.step_up_verified is True
+        assert profile_answered, "reads did not unlock after step-up"
+
+
+def _called_profile(result) -> bool:
+    try:
         result.expect.contains_function_call(name="get_customer_profile")
+        return True
+    except AssertionError:
+        return False
 
 
 async def test_reads_do_not_require_step_up(llm, verified_session_data) -> None:
